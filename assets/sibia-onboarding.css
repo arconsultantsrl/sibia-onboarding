@@ -1,0 +1,881 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600&family=Raleway:wght@400;500;600&display=swap');
+
+:root {
+    --sibia-blue: #1f5fa6;
+    --sibia-blue-dark: #174a85;
+    --sibia-blue-light: #e8f1fb;
+    --sibia-blue-50: #f0f6ff;
+    --sibia-ink: #1c2b3a;
+    --sibia-muted: #61758b;
+    --sibia-border: #d6e1ee;
+    --sibia-card: #ffffff;
+    --sibia-bg: linear-gradient(135deg, #f5f9ff 0%, #ffffff 60%, #f0f5fb 100%);
+    --sibia-gray-50: #f9fafb;
+    --sibia-gray-100: #f3f4f6;
+    --sibia-gray-200: #e5e7eb;
+    --sibia-success: #10b981;
+    --sibia-success-bg: #d1fae5;
+    --sibia-error: #ef4444;
+    --sibia-error-bg: #fee2e2;
+    --sibia-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+    --sibia-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --sibia-shadow-lg: 0 12px 32px rgba(19, 43, 79, 0.10);
+    --sibia-shadow-blue: 0 4px 14px rgba(31, 95, 166, 0.22);
+}
+
+/* ==========================
+   HIDE FOOTER ON PORTAL PAGE
+   ========================== */
+
+body:has(.sibia-portal) #Footer,
+body:has(.sibia-portal) .widgets_wrapper,
+body:has(.sibia-portal) .footer-copy {
+    display: none !important;
+}
+
+/* ==========================
+   BASE / ONBOARDING
+   ========================== */
+
+.sibia-onboarding {
+    font-family: 'DM Sans', sans-serif;
+    color: var(--sibia-ink);
+    background: var(--sibia-bg);
+    padding: 32px 24px 48px;
+    border-radius: 18px;
+    box-shadow: var(--sibia-shadow-lg);
+}
+
+.sibia-hero {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 18px;
+    align-items: center;
+    padding: 8px 0 24px;
+    border-bottom: 1px solid var(--sibia-border);
+}
+
+.sibia-hero__logo img {
+    width: 54px;
+    height: 54px;
+}
+
+.sibia-hero h1 {
+    font-family: 'Raleway', sans-serif;
+    font-size: 28px;
+    font-weight: 600;
+    margin: 0 0 6px;
+}
+
+.sibia-hero p {
+    margin: 0;
+    color: var(--sibia-muted);
+}
+
+.sibia-steps {
+    display: grid;
+    gap: 22px;
+    margin-top: 24px;
+}
+
+.sibia-step {
+    background: var(--sibia-card);
+    border: 1px solid var(--sibia-border);
+    border-radius: 14px;
+    padding: 24px 22px;
+}
+
+.sibia-step__title {
+    font-family: 'Raleway', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--sibia-blue-dark);
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--sibia-gray-200);
+}
+
+/* ==========================
+   BUTTONS
+   ========================== */
+
+.sibia-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, var(--sibia-blue) 0%, #2968b0 100%);
+    color: #fff;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    width: fit-content;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--sibia-shadow-blue);
+}
+
+.sibia-btn:hover {
+    background: linear-gradient(135deg, var(--sibia-blue-dark) 0%, var(--sibia-blue) 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(31, 95, 166, 0.30);
+}
+
+.sibia-btn:active {
+    transform: translateY(0);
+}
+
+.sibia-btn--ghost {
+    background: #ffffff;
+    color: var(--sibia-blue-dark);
+    border: 1.5px solid var(--sibia-border);
+    box-shadow: var(--sibia-shadow-sm);
+}
+
+.sibia-btn--ghost:hover {
+    background: var(--sibia-blue-50);
+    border-color: var(--sibia-blue);
+    box-shadow: var(--sibia-shadow-md);
+}
+
+.sibia-btn--outline {
+    background: #ffffff;
+    color: var(--sibia-blue);
+    border: 1.5px solid var(--sibia-blue);
+    box-shadow: none;
+}
+
+.sibia-btn--outline:hover {
+    background: var(--sibia-blue-light);
+    box-shadow: var(--sibia-shadow-sm);
+}
+
+.sibia-btn--small {
+    padding: 8px 16px;
+    font-size: 13px;
+    border-radius: 8px;
+}
+
+.sibia-apikey-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.sibia-apikey-row input {
+    flex: 1;
+}
+
+/* ==========================
+   PANELS & NOTICES
+   ========================== */
+
+.sibia-panel {
+    padding: 16px 18px;
+    background: var(--sibia-blue-light);
+    border-radius: 12px;
+    border: 1px solid var(--sibia-border);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.sibia-panel input {
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1.5px solid var(--sibia-border);
+    background: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+}
+
+.sibia-panel--success {
+    background: var(--sibia-success-bg);
+    border-color: #a7f3d0;
+    color: #065f46;
+}
+
+.sibia-panel--error {
+    background: var(--sibia-error-bg);
+    border-color: #fecaca;
+    color: #991b1b;
+}
+
+/* ==========================
+   PORTAL LAYOUT
+   ========================== */
+
+.sibia-portal {
+    font-family: 'DM Sans', sans-serif;
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 28px;
+    background: var(--sibia-bg);
+    padding: 28px;
+    border-radius: 18px;
+    box-shadow: var(--sibia-shadow-lg);
+    min-height: 600px;
+}
+
+/* ==========================
+   PORTAL NAVIGATION
+   ========================== */
+
+.sibia-portal__nav {
+    background: #ffffff;
+    border: 1px solid var(--sibia-border);
+    border-radius: 16px;
+    padding: 20px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    box-shadow: var(--sibia-shadow-sm);
+}
+
+.sibia-portal__brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: 'Raleway', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--sibia-blue-dark);
+    padding: 4px 8px 16px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--sibia-gray-200);
+}
+
+.sibia-portal__brand img {
+    width: 36px;
+    height: 36px;
+}
+
+.sibia-nav-section {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.sibia-nav-spacer {
+    flex: 1;
+    min-height: 20px;
+}
+
+.sibia-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    border: 1.5px solid var(--sibia-gray-200);
+    background: var(--sibia-gray-50);
+    text-align: left;
+    padding: 12px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    color: var(--sibia-ink);
+    font-family: 'Raleway', sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sibia-nav-item:hover {
+    background: var(--sibia-blue-light);
+    border-color: #b8d4f0;
+    color: var(--sibia-blue-dark);
+    transform: translateX(2px);
+}
+
+.sibia-nav-item.is-active {
+    background: linear-gradient(135deg, var(--sibia-blue) 0%, #2968b0 100%);
+    border-color: transparent;
+    color: #ffffff;
+    font-weight: 600;
+    box-shadow: var(--sibia-shadow-blue);
+}
+
+.sibia-nav-item.is-disabled,
+.sibia-nav-item:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* ==========================
+   PORTAL MAIN CONTENT
+   ========================== */
+
+.sibia-portal__main {
+    display: grid;
+    gap: 18px;
+    align-content: start;
+}
+
+.sibia-section {
+    display: none;
+}
+
+.sibia-section.is-active {
+    display: grid;
+    gap: 20px;
+    align-content: start;
+}
+
+/* Hero block header */
+.sibia-hero-block {
+    background: #ffffff;
+    border: 1px solid var(--sibia-border);
+    border-radius: 14px;
+    padding: 28px 32px;
+    text-align: center;
+    display: grid;
+    gap: 8px;
+    justify-items: center;
+}
+
+.sibia-hero-block img {
+    width: 64px;
+    height: 64px;
+}
+
+.sibia-hero-block h2 {
+    font-family: 'Raleway', sans-serif;
+    font-size: 26px;
+    font-weight: 600;
+    margin: 0;
+    color: var(--sibia-blue-dark);
+}
+
+.sibia-hero-block p {
+    margin: 0;
+    color: var(--sibia-muted);
+    font-size: 14px;
+}
+
+/* ==========================
+   FORM SYSTEM
+   ========================== */
+
+.sibia-form {
+    display: grid;
+    gap: 20px;
+}
+
+.sibia-form-section {
+    display: grid;
+    gap: 14px;
+}
+
+.sibia-form-section__header {
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--sibia-gray-200);
+}
+
+.sibia-form-section__header h3 {
+    margin: 0;
+    font-family: 'Raleway', sans-serif;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--sibia-blue-dark);
+}
+
+/* Form field label + input wrapper */
+.sibia-form label,
+.sibia-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--sibia-ink);
+}
+
+.sibia-form label span,
+.sibia-field-label {
+    font-family: 'Raleway', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--sibia-muted);
+    letter-spacing: 0.01em;
+}
+
+/* Inputs */
+.sibia-form input[type="text"],
+.sibia-form input[type="email"],
+.sibia-form input[type="password"],
+.sibia-form input[type="tel"],
+.sibia-form select {
+    width: 100%;
+    padding: 13px 16px;
+    border-radius: 8px;
+    border: 1.5px solid var(--sibia-border);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    color: var(--sibia-ink);
+    background: #ffffff;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.sibia-form input:focus,
+.sibia-form select:focus {
+    border-color: var(--sibia-blue);
+    box-shadow: 0 0 0 3px rgba(31, 95, 166, 0.10);
+}
+
+.sibia-form input[readonly] {
+    background: var(--sibia-gray-50);
+    color: var(--sibia-muted);
+    cursor: default;
+}
+
+.sibia-form input::placeholder {
+    color: #b0bec5;
+    font-weight: 400;
+}
+
+/* 2 column grid */
+.sibia-form-grid-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+/* CAP + City + Provincia row */
+.sibia-form-row-cap {
+    display: grid;
+    grid-template-columns: 120px 1fr 80px;
+    gap: 14px;
+}
+
+/* Form divider */
+.sibia-form-divider {
+    height: 1px;
+    background: var(--sibia-gray-200);
+    margin: 4px 0;
+}
+
+.sibia-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+}
+
+/* ==========================
+   SOLUTION CARDS
+   ========================== */
+
+.sibia-card-grid {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.sibia-card {
+    border: 1.5px solid var(--sibia-border);
+    border-radius: 14px;
+    padding: 24px 20px;
+    text-align: left;
+    background: #ffffff;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.sibia-card::after {
+    content: '\2192';
+    position: absolute;
+    top: 24px;
+    right: 20px;
+    font-size: 18px;
+    color: var(--sibia-muted);
+    transition: all 0.2s ease;
+}
+
+.sibia-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--sibia-blue);
+    box-shadow: 0 12px 28px rgba(31, 95, 166, 0.16);
+}
+
+.sibia-card:hover::after {
+    color: var(--sibia-blue);
+    transform: translateX(4px);
+}
+
+.sibia-card:active {
+    transform: translateY(-1px);
+}
+
+.sibia-card__title {
+    display: block;
+    font-weight: 700;
+    font-size: 16px;
+    margin-bottom: 8px;
+    color: var(--sibia-ink);
+    padding-right: 24px;
+}
+
+.sibia-card__meta {
+    display: block;
+    color: var(--sibia-muted);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+/* ==========================
+   SOLUTION DRILL-DOWN
+   ========================== */
+
+.sibia-solution-list {
+    display: grid;
+    gap: 18px;
+}
+
+.sibia-solution-detail {
+    display: none;
+    gap: 18px;
+}
+
+.sibia-solution-detail[style*="display: none"] {
+    display: none !important;
+}
+
+.sibia-solution-detail:not([style*="display: none"]) {
+    display: grid;
+}
+
+.sibia-back-btn {
+    justify-self: start;
+}
+
+/* ==========================
+   PORTAL VIEWS (legacy)
+   ========================== */
+
+.sibia-view {
+    display: none;
+}
+
+.sibia-view.is-active {
+    display: block;
+}
+
+.sibia-status {
+    display: grid;
+    gap: 12px;
+    align-items: center;
+}
+
+/* Badge test */
+.sibia-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.sibia-badge--test {
+    background: #FFF3CD;
+    color: #856404;
+    border: 1px solid #FFE69C;
+}
+
+/* Stato sincronizzazione */
+.sibia-sync-status {
+    background: #F8F9FA;
+    border: 1px solid #E9ECEF;
+    border-radius: 12px;
+    padding: 20px 24px;
+}
+.sibia-sync-status__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+}
+.sibia-sync-status__row + .sibia-sync-status__row {
+    border-top: 1px solid #E9ECEF;
+}
+.sibia-sync-status__label {
+    font-size: 14px;
+    color: #6C757D;
+}
+.sibia-sync-status__value {
+    font-size: 14px;
+    font-weight: 600;
+    color: #212529;
+}
+
+/* ==========================
+   AUTH PAGES - Centered Card
+   ========================== */
+
+.the_content_wrapper .auth-layout {
+    background: transparent;
+    padding: 60px 20px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.the_content_wrapper .auth-layout .auth-box {
+    max-width: 440px;
+    width: 100%;
+    margin: 0 auto;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 8px 40px rgba(0, 7, 45, 0.10);
+    padding: 48px 40px;
+}
+
+/* Hide second auth-layout */
+.the_content_wrapper .auth-layout + .auth-layout {
+    display: none;
+}
+
+/* Hide duplicate login form */
+.the_content_wrapper > .mp_wrapper.mp_login_form {
+    display: none;
+}
+
+/* Hide Price: Free */
+.the_content_wrapper .auth-layout .mepr_price {
+    display: none;
+}
+
+/* Form rows */
+.the_content_wrapper .auth-layout .mp-form-row {
+    margin-bottom: 16px;
+    text-align: left;
+}
+
+/* Labels */
+.the_content_wrapper .auth-layout .mp-form-label label {
+    display: block;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--sibia-muted);
+    margin-bottom: 6px;
+}
+
+/* Inputs - underline style */
+.the_content_wrapper .auth-layout input[type="text"],
+.the_content_wrapper .auth-layout input[type="email"],
+.the_content_wrapper .auth-layout input[type="password"] {
+    width: 100%;
+    padding: 12px 0;
+    font-size: 15px;
+    font-family: 'DM Sans', sans-serif;
+    border: none;
+    border-bottom: 2px solid var(--sibia-border);
+    border-radius: 0;
+    background: transparent;
+    color: var(--sibia-ink);
+    transition: border-color 0.2s ease;
+    box-sizing: border-box;
+}
+
+.the_content_wrapper .auth-layout input[type="text"]:focus,
+.the_content_wrapper .auth-layout input[type="email"]:focus,
+.the_content_wrapper .auth-layout input[type="password"]:focus {
+    outline: none;
+    border-bottom-color: var(--sibia-blue);
+}
+
+/* Submit button */
+.the_content_wrapper .auth-layout input[type="submit"],
+.the_content_wrapper .auth-layout .mepr-submit {
+    width: 100%;
+    padding: 14px 24px;
+    font-size: 16px;
+    font-weight: 700;
+    font-family: 'DM Sans', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: var(--sibia-blue);
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    margin-top: 12px;
+}
+
+.the_content_wrapper .auth-layout input[type="submit"]:hover,
+.the_content_wrapper .auth-layout .mepr-submit:hover {
+    background: var(--sibia-blue-dark);
+}
+
+/* Password dimenticata link */
+.the_content_wrapper .auth-layout .mepr-login-actions {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.the_content_wrapper .auth-layout .mepr-login-actions a {
+    color: var(--sibia-blue);
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    text-decoration: none;
+}
+
+.the_content_wrapper .auth-layout .mepr-login-actions a:hover {
+    color: var(--sibia-blue-dark);
+    text-decoration: underline;
+}
+
+/* Checkbox */
+.the_content_wrapper .auth-layout label[for="rememberme"],
+.the_content_wrapper .auth-layout .mepr-checkbox-field {
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--sibia-muted);
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    text-align: left;
+}
+
+/* Error messages */
+.the_content_wrapper .auth-layout .cc-error {
+    font-size: 12px;
+    color: var(--sibia-error);
+    margin-top: 4px;
+}
+
+.the_content_wrapper .auth-layout .mepr-form-has-errors {
+    font-size: 14px;
+    color: var(--sibia-error);
+    text-align: center;
+    margin-top: 12px;
+}
+
+/* Password toggle */
+.the_content_wrapper .auth-layout div.mp-hide-pw {
+    position: relative;
+}
+
+.the_content_wrapper .auth-layout button.mp-hide-pw {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--sibia-muted);
+    padding: 4px;
+}
+
+/* Spacer */
+.the_content_wrapper .auth-layout .mp-spacer,
+.the_content_wrapper .auth-layout .mepr_spacer {
+    height: 8px;
+}
+
+/* Loading gif */
+.the_content_wrapper .auth-layout .mepr-loading-gif {
+    margin-top: 8px;
+}
+
+/* ==========================
+   SUCCESS / NOTICE BANNER
+   ========================== */
+
+.the_content_wrapper .mepr_notice {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    padding: 20px 28px;
+    border-radius: 12px;
+    text-align: center;
+    line-height: 1.5;
+}
+
+/* ==========================
+   RESPONSIVE
+   ========================== */
+
+@media (max-width: 900px) {
+    .sibia-portal {
+        grid-template-columns: 1fr;
+    }
+
+    .sibia-portal__nav {
+        flex-direction: row;
+        flex-wrap: wrap;
+        padding: 14px;
+    }
+
+    .sibia-portal__brand {
+        width: 100%;
+        margin-bottom: 4px;
+        padding-bottom: 12px;
+    }
+
+    .sibia-nav-section {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .sibia-nav-spacer {
+        display: none;
+    }
+
+    .sibia-nav-item {
+        width: auto;
+        padding: 9px 14px;
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 640px) {
+    .sibia-onboarding {
+        padding: 24px 16px 32px;
+    }
+
+    .sibia-hero {
+        grid-template-columns: 1fr;
+        text-align: left;
+    }
+
+    .sibia-portal {
+        padding: 16px;
+        gap: 16px;
+    }
+
+    .sibia-form-grid-2col {
+        grid-template-columns: 1fr;
+    }
+
+    .sibia-form-row-cap {
+        grid-template-columns: 100px 1fr;
+    }
+
+    .sibia-card-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .the_content_wrapper .auth-layout {
+        padding: 40px 12px;
+    }
+
+    .the_content_wrapper .auth-layout .auth-box {
+        padding: 32px 24px;
+    }
+
+    .sibia-hero-block {
+        padding: 20px 16px;
+    }
+}

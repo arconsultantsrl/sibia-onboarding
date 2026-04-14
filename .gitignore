@@ -1,0 +1,20 @@
+# Script di modifica locale (non fanno parte del plugin)
+patch_plugin.py
+patch1.py
+patch_step1.py
+do_patch.py
+
+# File di anteprima e documentazione locale
+preview.html
+guida-installazione.html
+
+# File di sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+*.swp
+*.swo
+*~
