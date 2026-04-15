@@ -213,24 +213,17 @@ function sibia_email_transizione_piano($user, $nuovoPiano, $nuovoIntervallo, $se
     $pianoLabel      = $nuovoPiano === 'professional' ? 'Professional' : 'Standard';
     $intervalloLabel = $nuovoIntervallo === 'annuale' ? 'Annuale' : 'Mensile';
 
-    // Ricava URL checkout del nuovo piano
-    $checkoutUrl = $siteUrl;
-    if ($servizio === 'SynchToFic') {
-        $piani = sibia_get_sytfic_piani_mepr();
-        $pid   = $piani[$nuovoPiano][$nuovoIntervallo] ?? 0;
-        if ($pid) $checkoutUrl = esc_url(get_permalink($pid));
-    }
+    // URL portale — l'utente sceglie il nuovo piano dal portale
+    $portalUrl = home_url('/area-riservata/?section=fatturazione');
 
     $corpoHtml = '<p>Gentile ' . esc_html($user->display_name) . ',</p>'
         . '<p>il tuo abbonamento precedente è scaduto. Ora puoi attivare il nuovo piano <strong>'
-        . esc_html($pianoLabel . ' / ' . $intervalloLabel) . '</strong>.</p>'
-        . '<p>Clicca sul bottone qui sotto per completare l\'attivazione:</p>';
+        . esc_html($pianoLabel . ' / ' . $intervalloLabel) . '</strong> dal portale.</p>';
 
     wp_mail(
         $user->user_email,
         'Il tuo nuovo piano è pronto — SIBIA',
-        sibia_email_html('Attiva il tuo nuovo piano', $corpoHtml, $checkoutUrl,
-            'Attiva ' . $pianoLabel . ' ' . $intervalloLabel),
+        sibia_email_html('Attiva il tuo nuovo piano', $corpoHtml, $portalUrl, 'Accedi al portale'),
         ['Content-Type: text/html; charset=UTF-8']
     );
 }

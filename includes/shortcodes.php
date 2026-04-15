@@ -1385,24 +1385,12 @@ add_shortcode('sibia_portal', function () {
                     $recLimite      = intval($svcData['limiteRecordDemo'] ?? 100);
                     $intervallo     = $svcData['intervallo']              ?? '';
                     $pianoCorrente  = $svcData['piano']                   ?? 'standard';
-                    $meprConfig     = sibia_get_mepr_config();
-                    $meprPiani      = $meprConfig[$codice] ?? null;
-                    $modalPrezzoMensile = '49'; $modalPrezzoAnnuale = '490';
-                    $modalUrlMensile = ''; $modalUrlAnnuale = '';
-                    if ($meprPiani) {
-                        $modalUrlMensile = esc_url(get_permalink($meprPiani['mensile']));
-                        $modalUrlAnnuale = esc_url(get_permalink($meprPiani['annuale']));
-                        if (class_exists('MeprProduct')) {
-                            $pm = new MeprProduct(intval($meprPiani['mensile']));
-                            if ($pm->ID) $modalPrezzoMensile = number_format(floatval($pm->price), 0, ',', '.');
-                            $pa = new MeprProduct(intval($meprPiani['annuale']));
-                            if ($pa->ID) $modalPrezzoAnnuale = number_format(floatval($pa->price), 0, ',', '.');
-                        }
-                    }
-                    $modalNome = html_entity_decode(strip_tags($info['titolo']));
-                    $modalDesc = $info['descrizione'];
-                    // SynchToFic: piani Standard e Professional separati
-                    $sytFicPianiMepr = ($codice === 'SynchToFic') ? sibia_get_sytfic_piani_mepr() : null;
+                    // Legge prezzi da ApiConnect (con fallback ai valori predefiniti)
+                    $_pianiModal    = sibia_get_prezzi_piani($codice);
+                    $modalPrezzoMensile = number_format($_pianiModal['standard']['mensile']['euroMeseDisplay'] ?? 25, 0, ',', '.');
+                    $modalPrezzoAnnuale = number_format($_pianiModal['standard']['annuale']['euroTotale']      ?? 252, 0, ',', '.');
+                    $modalNome      = html_entity_decode(strip_tags($info['titolo']));
+                    $modalDesc      = $info['descrizione'];
                     $sytFicArticoliON = ($codice === 'SynchToFic') ? $sytFicSyncArticoliAbilitato : false;
                 ?>
                 <div class="sibia-solution-detail" data-solution="billing-<?php echo strtolower($codice); ?>">
@@ -1474,18 +1462,12 @@ add_shortcode('sibia_portal', function () {
                             // Piano schedulato per cambio a fine ciclo
                             $pianoSch  = ($codice === 'SynchToFic') ? sibia_get_piano_schedulato($user->ID, $codice) : null;
                             ?>
-                                <?php if ($codice === 'SynchToFic' && $sytFicPianiMepr) : ?>
+                                <?php if ($codice === 'SynchToFic') : ?>
                                     <?php
-                                    $stdPiani = $sytFicPianiMepr['standard'];
-                                    $proPiani = $sytFicPianiMepr['professional'];
-                                    $stdPrezzoM = '49'; $stdPrezzoA = '490';
-                                    $proPrezzoM = '79'; $proPrezzoA = '790';
-                                    if (class_exists('MeprProduct')) {
-                                        if ($stdPiani['mensile']) { $pm = new MeprProduct($stdPiani['mensile']); if ($pm->ID) $stdPrezzoM = number_format(floatval($pm->price), 0, ',', '.'); }
-                                        if ($stdPiani['annuale']) { $pa = new MeprProduct($stdPiani['annuale']); if ($pa->ID) $stdPrezzoA = number_format(floatval($pa->price), 0, ',', '.'); }
-                                        if ($proPiani['mensile']) { $pm = new MeprProduct($proPiani['mensile']); if ($pm->ID) $proPrezzoM = number_format(floatval($pm->price), 0, ',', '.'); }
-                                        if ($proPiani['annuale']) { $pa = new MeprProduct($proPiani['annuale']); if ($pa->ID) $proPrezzoA = number_format(floatval($pa->price), 0, ',', '.'); }
-                                    }
+                                    $stdPrezzoM = number_format($_pianiModal['standard']['mensile']['euroMeseDisplay']     ?? 25,  0, ',', '.');
+                                    $stdPrezzoA = number_format($_pianiModal['standard']['annuale']['euroTotale']          ?? 252, 0, ',', '.');
+                                    $proPrezzoM = number_format($_pianiModal['professional']['mensile']['euroMeseDisplay'] ?? 45,  0, ',', '.');
+                                    $proPrezzoA = number_format($_pianiModal['professional']['annuale']['euroTotale']      ?? 420, 0, ',', '.');
                                     $pianoRaccomandato = $sytFicArticoliON ? 'professional' : 'standard';
                                     $isCurrStdM = ($pCorrente === 'standard'     && $iCorrente === 'mensile');
                                     $isCurrStdA = ($pCorrente === 'standard'     && $iCorrente === 'annuale');
@@ -1575,29 +1557,27 @@ add_shortcode('sibia_portal', function () {
                                         </form>
                                         <?php endif; ?>
                                     </div>
-                                <?php else : // Altri servizi: layout 2-pulsanti classico
+                                <?php else : // Altri servizi: layout 2-pulsanti checkout
                                     $disableMensile = ($stato === 'attivo');
                                     $disableAnnuale = ($stato === 'attivo');
                                 ?>
-                                    <?php if ($meprPiani) : ?>
-                                    <button type="button" class="sibia-btn sibia-btn--primary js-sibia-modal"<?php if ($disableMensile) echo ' disabled'; ?>
-                                        data-nome="<?php echo esc_attr($modalNome); ?>"
-                                        data-piano="Mensile"
-                                        data-prezzo="€<?php echo esc_attr($modalPrezzoMensile); ?>"
-                                        data-periodo="/ mese"
-                                        data-desc="<?php echo esc_attr($modalDesc); ?>"
-                                        data-mepr-url="<?php echo $modalUrlMensile; ?>">
-                                        Abbonati &mdash; Mensile
-                                    </button>
-                                    <button type="button" class="sibia-btn sibia-btn--primary js-sibia-modal"<?php if ($disableAnnuale) echo ' disabled'; ?>
-                                        data-nome="<?php echo esc_attr($modalNome); ?>"
-                                        data-piano="Annuale"
-                                        data-prezzo="€<?php echo esc_attr($modalPrezzoAnnuale); ?>"
-                                        data-periodo="/ anno"
-                                        data-desc="<?php echo esc_attr($modalDesc); ?>"
-                                        data-mepr-url="<?php echo $modalUrlAnnuale; ?>">
-                                        Abbonati &mdash; Annuale <span class="sibia-badge sibia-badge--promo">Risparmia</span>
-                                    </button>
+                                    <?php if (!$disableMensile) : ?>
+                                    <form method="post" style="display:inline;">
+                                        <input type="hidden" name="sibia_billing_nonce"    value="<?php echo esc_attr($nonce); ?>">
+                                        <input type="hidden" name="sibia_billing_action"   value="checkout">
+                                        <input type="hidden" name="sibia_billing_servizio" value="<?php echo esc_attr($codice); ?>">
+                                        <input type="hidden" name="sibia_billing_piano"    value="standard">
+                                        <input type="hidden" name="sibia_billing_intervallo" value="mensile">
+                                        <button type="submit" class="sibia-btn sibia-btn--primary">Abbonati &mdash; Mensile</button>
+                                    </form>
+                                    <form method="post" style="display:inline;">
+                                        <input type="hidden" name="sibia_billing_nonce"    value="<?php echo esc_attr($nonce); ?>">
+                                        <input type="hidden" name="sibia_billing_action"   value="checkout">
+                                        <input type="hidden" name="sibia_billing_servizio" value="<?php echo esc_attr($codice); ?>">
+                                        <input type="hidden" name="sibia_billing_piano"    value="standard">
+                                        <input type="hidden" name="sibia_billing_intervallo" value="annuale">
+                                        <button type="submit" class="sibia-btn sibia-btn--primary">Abbonati &mdash; Annuale <span class="sibia-badge sibia-badge--promo">Risparmia</span></button>
+                                    </form>
                                     <?php else : ?>
                                     <p style="color:var(--sibia-muted);font-size:13px;">I prezzi di abbonamento saranno disponibili a breve.</p>
                                     <?php endif; ?>
@@ -1651,27 +1631,18 @@ add_shortcode('sibia_portal', function () {
                 /* Dati piano SynchToFic */
                 $_abbStato        = $sytFicBillingItem['stato']     ?? 'inattivo';
                 $_abbPianoAttuale  = $sytFicBillingItem['piano']     ?? 'standard';
-                /* Leggi prezzi da MemberPress */
-                $_abbPianiMepr = sibia_get_sytfic_piani_mepr();
+                /* Leggi prezzi da ApiConnect (con fallback ai valori predefiniti) */
+                $_prezziPiani = sibia_get_prezzi_piani('SynchToFic');
                 $_abbPrezzo = array(
-                    'standard'     => array('mensile' => '49',  'annuale' => '490'),
-                    'professional' => array('mensile' => '79',  'annuale' => '790'),
+                    'standard'     => array(
+                        'mensile' => number_format($_prezziPiani['standard']['mensile']['euroMeseDisplay'] ?? 25, 0, ',', '.'),
+                        'annuale' => number_format($_prezziPiani['standard']['annuale']['euroTotale']      ?? 252, 0, ',', '.'),
+                    ),
+                    'professional' => array(
+                        'mensile' => number_format($_prezziPiani['professional']['mensile']['euroMeseDisplay'] ?? 45, 0, ',', '.'),
+                        'annuale' => number_format($_prezziPiani['professional']['annuale']['euroTotale']      ?? 420, 0, ',', '.'),
+                    ),
                 );
-                $_abbUrl = array(
-                    'standard'     => array('mensile' => '', 'annuale' => ''),
-                    'professional' => array('mensile' => '', 'annuale' => ''),
-                );
-                if (class_exists('MeprProduct')) {
-                    foreach ($_abbPianiMepr as $_abbPianoKey => $_abbIds) {
-                        foreach (array('mensile', 'annuale') as $_abbInt) {
-                            $__p = new MeprProduct(intval($_abbIds[$_abbInt]));
-                            if ($__p->ID) {
-                                $_abbPrezzo[$_abbPianoKey][$_abbInt] = number_format(floatval($__p->price), 0, ',', '.');
-                                $_abbUrl[$_abbPianoKey][$_abbInt]    = esc_url(get_permalink($__p->ID));
-                            }
-                        }
-                    }
-                }
                 $statoLabel    = array('demo'=>'Demo attiva','attivo'=>'Attivo','scaduto'=>'Scaduto','inattivo'=>'Non attivo')[$_abbStato] ?? 'Non attivo';
                 $statoClass    = array('demo'=>'--demo','attivo'=>'--attivo','scaduto'=>'--scaduto','inattivo'=>'')[$_abbStato] ?? '';
                 $_abbIntervallo = $sytFicBillingItem['intervallo'] ?? 'mensile';
@@ -1746,9 +1717,7 @@ add_shortcode('sibia_portal', function () {
                         <?php $_stdAttivo = ($_isAttivo && $_abbPianoAttuale === 'standard'); ?>
                         <div class="sibia-abb-card<?php echo $_stdAttivo ? ' sibia-abb-card--current' : ''; ?>"
                             data-price-mensile="<?php echo esc_attr($_abbPrezzo['standard']['mensile']); ?>"
-                            data-price-annuale="<?php echo esc_attr($_abbPrezzo['standard']['annuale']); ?>"
-                            data-url-mensile="<?php echo esc_attr($_stdAttivo ? '' : $_abbUrl['standard']['mensile']); ?>"
-                            data-url-annuale="<?php echo esc_attr($_stdAttivo ? '' : $_abbUrl['standard']['annuale']); ?>">
+                            data-price-annuale="<?php echo esc_attr($_abbPrezzo['standard']['annuale']); ?>">
                             <div class="sibia-abb-card__name">Standard</div>
                             <div class="sibia-abb-card__price">
                                 <span class="sibia-abb-card__amount" data-role="amount"><?php echo esc_html($_abbPrezzo['standard']['mensile']); ?></span>
@@ -1762,11 +1731,30 @@ add_shortcode('sibia_portal', function () {
                             </ul>
                             <?php if ($_stdAttivo) : ?>
                             <span class="sibia-btn sibia-btn--outline sibia-abb-card__cta" style="pointer-events:none;background:#e8f5e9;border-color:#81c784;color:#2e7d32;text-align:center;">&#10003; Piano attuale</span>
+                            <?php elseif ($_isAttivo) : ?>
+                            <form method="post">
+                                <input type="hidden" name="sibia_billing_nonce"            value="<?php echo esc_attr(wp_create_nonce('sibia_billing')); ?>">
+                                <input type="hidden" name="sibia_billing_action"           value="cambio_piano">
+                                <input type="hidden" name="sibia_billing_servizio"         value="SynchToFic">
+                                <input type="hidden" name="sibia_billing_nuovo_piano"      value="standard">
+                                <input type="hidden" name="sibia_billing_nuovo_intervallo" id="cambio-std-intervallo" value="mensile">
+                                <button type="submit" class="sibia-btn sibia-btn--outline sibia-abb-card__cta" data-role="cta"
+                                    onclick="document.getElementById('cambio-std-intervallo').value=document.querySelector('.sibia-abb-toggle__btn.is-active').getAttribute('data-interval');">
+                                    Passa a Standard &rarr;
+                                </button>
+                            </form>
                             <?php else : ?>
-                            <a href="<?php echo esc_attr($_abbUrl['standard']['mensile']); ?>" class="sibia-btn sibia-btn--outline sibia-abb-card__cta" data-role="cta"
-                                <?php echo empty($_abbUrl['standard']['mensile']) ? 'style="pointer-events:none;opacity:.5;"' : ''; ?>>
-                                <?php echo $_isAttivo ? 'Passa a Standard &rarr;' : 'Continua al pagamento sicuro &rarr;'; ?>
-                            </a>
+                            <form method="post">
+                                <input type="hidden" name="sibia_billing_nonce"    value="<?php echo esc_attr(wp_create_nonce('sibia_billing')); ?>">
+                                <input type="hidden" name="sibia_billing_action"   value="checkout">
+                                <input type="hidden" name="sibia_billing_servizio" value="SynchToFic">
+                                <input type="hidden" name="sibia_billing_piano"    value="standard">
+                                <input type="hidden" name="sibia_billing_intervallo" id="checkout-std-intervallo" value="mensile">
+                                <button type="submit" class="sibia-btn sibia-btn--outline sibia-abb-card__cta" data-role="cta"
+                                    onclick="document.getElementById('checkout-std-intervallo').value=document.querySelector('.sibia-abb-toggle__btn.is-active').getAttribute('data-interval');">
+                                    Continua al pagamento sicuro &rarr;
+                                </button>
+                            </form>
                             <?php endif; ?>
                         </div>
 
@@ -1774,9 +1762,7 @@ add_shortcode('sibia_portal', function () {
                         <?php $_proAttivo = ($_isAttivo && $_abbPianoAttuale === 'professional'); ?>
                         <div class="sibia-abb-card sibia-abb-card--featured<?php echo $_proAttivo ? ' sibia-abb-card--current' : ''; ?>"
                             data-price-mensile="<?php echo esc_attr($_abbPrezzo['professional']['mensile']); ?>"
-                            data-price-annuale="<?php echo esc_attr($_abbPrezzo['professional']['annuale']); ?>"
-                            data-url-mensile="<?php echo esc_attr($_proAttivo ? '' : $_abbUrl['professional']['mensile']); ?>"
-                            data-url-annuale="<?php echo esc_attr($_proAttivo ? '' : $_abbUrl['professional']['annuale']); ?>">
+                            data-price-annuale="<?php echo esc_attr($_abbPrezzo['professional']['annuale']); ?>">
                             <div class="sibia-abb-card__badge"><?php echo $_proAttivo ? '&#10003; Attivo' : 'Consigliato'; ?></div>
                             <div class="sibia-abb-card__name">Professional</div>
                             <div class="sibia-abb-card__price">
@@ -1791,11 +1777,30 @@ add_shortcode('sibia_portal', function () {
                             </ul>
                             <?php if ($_proAttivo) : ?>
                             <span class="sibia-btn sibia-btn--primary sibia-abb-card__cta" style="pointer-events:none;opacity:.85;text-align:center;">&#10003; Piano attuale</span>
+                            <?php elseif ($_isAttivo) : ?>
+                            <form method="post">
+                                <input type="hidden" name="sibia_billing_nonce"            value="<?php echo esc_attr(wp_create_nonce('sibia_billing')); ?>">
+                                <input type="hidden" name="sibia_billing_action"           value="cambio_piano">
+                                <input type="hidden" name="sibia_billing_servizio"         value="SynchToFic">
+                                <input type="hidden" name="sibia_billing_nuovo_piano"      value="professional">
+                                <input type="hidden" name="sibia_billing_nuovo_intervallo" id="cambio-pro-intervallo" value="mensile">
+                                <button type="submit" class="sibia-btn sibia-btn--primary sibia-abb-card__cta" data-role="cta"
+                                    onclick="document.getElementById('cambio-pro-intervallo').value=document.querySelector('.sibia-abb-toggle__btn.is-active').getAttribute('data-interval');">
+                                    Passa a Professional &rarr;
+                                </button>
+                            </form>
                             <?php else : ?>
-                            <a href="<?php echo esc_attr($_abbUrl['professional']['mensile']); ?>" class="sibia-btn sibia-btn--primary sibia-abb-card__cta" data-role="cta"
-                                <?php echo empty($_abbUrl['professional']['mensile']) ? 'style="pointer-events:none;opacity:.5;"' : ''; ?>>
-                                <?php echo $_isAttivo ? 'Passa a Professional &rarr;' : 'Continua al pagamento sicuro &rarr;'; ?>
-                            </a>
+                            <form method="post">
+                                <input type="hidden" name="sibia_billing_nonce"    value="<?php echo esc_attr(wp_create_nonce('sibia_billing')); ?>">
+                                <input type="hidden" name="sibia_billing_action"   value="checkout">
+                                <input type="hidden" name="sibia_billing_servizio" value="SynchToFic">
+                                <input type="hidden" name="sibia_billing_piano"    value="professional">
+                                <input type="hidden" name="sibia_billing_intervallo" id="checkout-pro-intervallo" value="mensile">
+                                <button type="submit" class="sibia-btn sibia-btn--primary sibia-abb-card__cta" data-role="cta"
+                                    onclick="document.getElementById('checkout-pro-intervallo').value=document.querySelector('.sibia-abb-toggle__btn.is-active').getAttribute('data-interval');">
+                                    Continua al pagamento sicuro &rarr;
+                                </button>
+                            </form>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -2954,7 +2959,6 @@ add_shortcode('sibia_registrazione', function () {
    ======================================================================== */
 
 add_shortcode('sibia_prezzi', function () {
-    $config  = sibia_get_mepr_config();
     $servizi = array(
         'SynchToFic' => array(
             'titolo'      => 'Synchroteam &#8596; Fatture in Cloud',
@@ -2991,22 +2995,13 @@ add_shortcode('sibia_prezzi', function () {
         </div>
 
         <?php foreach ($servizi as $codice => $info) :
-            $piani = $config[$codice] ?? null;
-
-            /* Legge i prezzi da MemberPress se disponibile, altrimenti usa valori di default */
-            $prezzoMensile = 49; $prezzoAnnuale = 490;
-            $urlMensile = ''; $urlAnnuale = '';
-            if ($piani) {
-                $urlMensile = get_permalink($piani['mensile']);
-                $urlAnnuale = get_permalink($piani['annuale']);
-                if (class_exists('MeprProduct')) {
-                    $pm = new MeprProduct(intval($piani['mensile']));
-                    if ($pm->ID) $prezzoMensile = floatval($pm->price);
-                    $pa = new MeprProduct(intval($piani['annuale']));
-                    if ($pa->ID) $prezzoAnnuale = floatval($pa->price);
-                }
-            }
-            $risparmioAnno = $prezzoMensile * 12 - $prezzoAnnuale;
+            /* Legge i prezzi da ApiConnect */
+            $_piani = sibia_get_prezzi_piani($codice);
+            $prezzoMensile = $_piani['standard']['mensile']['euroMeseDisplay'] ?? 25;
+            $prezzoAnnuale = $_piani['standard']['annuale']['euroTotale']      ?? 252;
+            $urlMensile = home_url('/area-riservata/?section=fatturazione');
+            $urlAnnuale = home_url('/area-riservata/?section=fatturazione');
+            $risparmioAnno = ($prezzoMensile * 12) - $prezzoAnnuale;
             $risparmioStr  = $risparmioAnno > 0 ? 'Risparmia &euro;' . number_format($risparmioAnno, 0, ',', '.') . '/anno' : '';
         ?>
         <div class="sibia-prezzi-service">

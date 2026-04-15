@@ -102,12 +102,8 @@ add_action('init', function () {
     $user_id = (int) $data['uid'];
     delete_option('sibia_ev_' . $token);
 
-    // Verifica email: i due meta che MemberPress 1.12.x controlla (identificati con debug 06/04/2026).
-    // 'user_activation_key' in wp_usermeta = hash di attivazione da eliminare.
-    // 'user_activation_status' in wp_usermeta = 0 non verificato, 1 verificato.
-    // NOTA: questi sono user meta, distinti dal campo wp_users.user_activation_key.
-    delete_user_meta($user_id, 'user_activation_key');
-    update_user_meta($user_id, 'user_activation_status', 1);
+    // Segna l'email come verificata nel profilo utente (campo proprio SIBIA).
+    update_user_meta($user_id, 'sibia_email_verificata', 1);
     clean_user_cache($user_id);
 
     $okUrl = add_query_arg('sibia_ok', '1',
