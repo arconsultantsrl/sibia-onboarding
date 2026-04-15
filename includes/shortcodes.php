@@ -367,7 +367,7 @@ add_shortcode('sibia_portal', function () {
             <button class="sibia-nav-item<?php echo $activeSection === 'fatturazione' ? ' is-active' : ''; ?><?php echo $navDisabled; ?>" data-section="fatturazione"<?php echo $hasRagioneSociale ? '' : ' disabled'; ?>>Fatturazione</button>
             <a href="<?php echo wp_logout_url(home_url()); ?>" class="sibia-nav-item" style="text-decoration: none; margin-top: 8px; border-color: #fecaca; background: #fee2e2; color: #991b1b;">Esci</a>
             <div style="margin-top: 10px; text-align: center; font-size: 11px; color: var(--sibia-muted);">Versione <?php
-                $plugin_data = get_file_data(__FILE__, ['Version' => 'Version']);
+                $plugin_data = get_file_data(SIBIA_PLUGIN_FILE, ['Version' => 'Version']);
                 echo esc_html($plugin_data['Version']);
             ?></div>
         </aside>
