@@ -1,0 +1,170 @@
+<?php
+/**
+ * SIBIA Onboarding — Pannello impostazioni WordPress
+ */
+
+if (!defined('ABSPATH')) { exit; }
+
+add_action('admin_menu', function () {
+    add_options_page(
+        'SIBIA Onboarding',
+        'SIBIA Onboarding',
+        'manage_options',
+        'sibia-onboarding',
+        'sibia_onboarding_render_settings'
+    );
+});
+
+add_action('admin_init', function () {
+    register_setting('sibia_onboarding_settings', 'sibia_onboarding_api_base');
+    register_setting('sibia_onboarding_settings', 'sibia_onboarding_secret');
+    register_setting('sibia_onboarding_settings', 'sibia_onboarding_header');
+
+    add_settings_section(
+        'sibia_onboarding_main',
+        'Configurazione ApiConnect',
+        '__return_false',
+        'sibia-onboarding'
+    );
+
+    add_settings_field(
+        'sibia_onboarding_api_base',
+        'Base URL ApiConnect',
+        function () {
+            $value = esc_attr(sibia_onboarding_get_option('sibia_onboarding_api_base', 'https://api.cloud-ar.it/api/v1'));
+            echo "<input type=\"text\" class=\"regular-text\" name=\"sibia_onboarding_api_base\" value=\"{$value}\" />";
+        },
+        'sibia-onboarding',
+        'sibia_onboarding_main'
+    );
+
+    add_settings_field(
+        'sibia_onboarding_secret',
+        'Onboarding secret',
+        function () {
+            $value = esc_attr(sibia_onboarding_get_option('sibia_onboarding_secret', ''));
+            echo "<input type=\"password\" class=\"regular-text\" name=\"sibia_onboarding_secret\" value=\"{$value}\" />";
+        },
+        'sibia-onboarding',
+        'sibia_onboarding_main'
+    );
+
+    add_settings_field(
+        'sibia_onboarding_header',
+        'Header onboarding',
+        function () {
+            $value = esc_attr(sibia_onboarding_get_option('sibia_onboarding_header', 'X-ONBOARDING-KEY'));
+            echo "<input type=\"text\" class=\"regular-text\" name=\"sibia_onboarding_header\" value=\"{$value}\" />";
+        },
+        'sibia-onboarding',
+        'sibia_onboarding_main'
+    );
+});
+
+function sibia_onboarding_render_settings()
+{
+    $updateStatus = isset($_GET['sibia_update']) ? sanitize_text_field($_GET['sibia_update']) : '';
+    $statusMessages = array(
+        'success'       => array('success', 'Plugin aggiornato con successo! La pagina verrà ricaricata.'),
+        'error_upload'  => array('error',   'Nessun file ricevuto o errore durante l\'upload.'),
+        'error_zip'     => array('error',   'ZipArchive non disponibile su questo server.'),
+        'error_open'    => array('error',   'Impossibile aprire il file ZIP.'),
+        'error_invalid' => array('error',   'ZIP non valido: non contiene sibia-onboarding.php alla radice.'),
+        'error_extract' => array('error',   'Estrazione fallita. Verificare i permessi della cartella plugins.'),
+    );
+    ?>
+    <div class="wrap">
+        <h1>SIBIA Onboarding</h1>
+
+        <!-- ===== Configurazione ApiConnect ===== -->
+        <form method="post" action="options.php">
+            <?php
+            settings_fields('sibia_onboarding_settings');
+            do_settings_sections('sibia-onboarding');
+            submit_button('Salva impostazioni');
+            ?>
+        </form>
+
+        <hr />
+
+        <!-- ===== Aggiornamento plugin ===== -->
+        <h2>Aggiornamento plugin</h2>
+        <p style="color:#555;">Carica il file <strong>sibia-onboarding.zip</strong> per aggiornare il plugin direttamente,
+        senza passare per il meccanismo di WordPress che crea cartelle duplicate (-1, -2, ecc.).</p>
+
+        <?php if (!empty($updateStatus) && isset($statusMessages[$updateStatus])) :
+            [$type, $msg] = $statusMessages[$updateStatus]; ?>
+            <div class="notice notice-<?php echo esc_attr($type); ?> is-dismissible" style="margin-left:0;">
+                <p><?php echo esc_html($msg); ?></p>
+            </div>
+        <?php endif; ?>
+
+        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" enctype="multipart/form-data">
+            <input type="hidden" name="action" value="sibia_self_update" />
+            <?php wp_nonce_field('sibia_self_update_nonce'); ?>
+            <table class="form-table">
+                <tr>
+                    <th scope="row"><label for="sibia_plugin_zip">ZIP del plugin</label></th>
+                    <td>
+                        <input type="file" id="sibia_plugin_zip" name="sibia_plugin_zip" accept=".zip" />
+                        <p class="description">Seleziona <code>sibia-onboarding.zip</code> dal tuo computer.</p>
+                    </td>
+                </tr>
+            </table>
+            <?php submit_button('Aggiorna plugin'); ?>
+        </form>
+    </div>
+    <?php
+}
+
+add_action('admin_post_sibia_self_update', 'sibia_handle_self_update');
+
+function sibia_handle_self_update()
+{
+    if (!current_user_can('manage_options')) {
+        wp_die('Accesso negato.');
+    }
+
+    check_admin_referer('sibia_self_update_nonce');
+
+    $redirect = admin_url('options-general.php?page=sibia-onboarding&sibia_update=');
+
+    // Verifica upload
+    if (empty($_FILES['sibia_plugin_zip']) || $_FILES['sibia_plugin_zip']['error'] !== UPLOAD_ERR_OK) {
+        wp_redirect($redirect . 'error_upload');
+        exit;
+    }
+
+    // Verifica ZipArchive
+    if (!class_exists('ZipArchive')) {
+        wp_redirect($redirect . 'error_zip');
+        exit;
+    }
+
+    $tmpFile = $_FILES['sibia_plugin_zip']['tmp_name'];
+    $zip = new ZipArchive();
+
+    if ($zip->open($tmpFile) !== true) {
+        wp_redirect($redirect . 'error_open');
+        exit;
+    }
+
+    // Verifica che il ZIP contenga la struttura corretta (file alla radice, nessuna cartella padre)
+    if ($zip->locateName('sibia-onboarding.php') === false) {
+        $zip->close();
+        wp_redirect($redirect . 'error_invalid');
+        exit;
+    }
+
+    // Estrai in wp-content/plugins/sibia-onboarding/ → sovrascrive i file sul posto
+    $result = $zip->extractTo(WP_PLUGIN_DIR . '/sibia-onboarding/');
+    $zip->close();
+
+    if (!$result) {
+        wp_redirect($redirect . 'error_extract');
+        exit;
+    }
+
+    wp_redirect($redirect . 'success');
+    exit;
+}
