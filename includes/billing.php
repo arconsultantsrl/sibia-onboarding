@@ -78,6 +78,11 @@ add_action('wp_loaded', function () {
     $action   = sanitize_text_field(wp_unslash($_POST['sibia_billing_action']));
     $servizio = sanitize_text_field(wp_unslash($_POST['sibia_billing_servizio'] ?? ''));
 
+    // Whitelist servizi — solo valori attesi accettati
+    if (!in_array($servizio, array('SynchToFic', 'PicToPip'), true)) {
+        wp_redirect($returnUrl); exit;
+    }
+
     $page      = get_page_by_path('area-riservata');
     $baseRet   = $page ? get_permalink($page->ID) : home_url('/');
     $returnUrl = add_query_arg('section', 'fatturazione', remove_query_arg(
@@ -95,6 +100,11 @@ add_action('wp_loaded', function () {
             // Apre la pagina di pagamento Stripe tramite ApiConnect
             $piano      = sanitize_text_field(wp_unslash($_POST['sibia_billing_piano']      ?? 'standard'));
             $intervallo = sanitize_text_field(wp_unslash($_POST['sibia_billing_intervallo'] ?? 'mensile'));
+            // Whitelist piano e intervallo — solo combinazioni valide accettate
+            if (!in_array($piano,      array('standard', 'professional'), true) ||
+                !in_array($intervallo, array('mensile', 'annuale'),       true)) {
+                wp_redirect($returnUrl); exit;
+            }
             $url = sibia_billing_get_checkout_url($email, $servizio, $piano, $intervallo);
             if ($url) {
                 wp_redirect($url);
