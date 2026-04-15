@@ -240,7 +240,10 @@ function sibia_billing_get_checkout_url($email, $servizio, $piano = 'standard', 
     if (is_wp_error($response)) return null;
     $data = json_decode(wp_remote_retrieve_body($response), true);
     if (empty($data['success'])) return null;
-    return $data['data']['url'] ?? null;
+    $url = $data['data']['url'] ?? null;
+    // Valida che l'URL sia HTTPS (Stripe usa sempre HTTPS per le checkout session)
+    if (!is_string($url) || strpos($url, 'https://') !== 0) return null;
+    return $url;
 }
 
 /**
