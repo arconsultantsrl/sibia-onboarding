@@ -78,16 +78,17 @@ add_action('wp_loaded', function () {
     $action   = sanitize_text_field(wp_unslash($_POST['sibia_billing_action']));
     $servizio = sanitize_text_field(wp_unslash($_POST['sibia_billing_servizio'] ?? ''));
 
-    // Whitelist servizi — solo valori attesi accettati
-    if (!in_array($servizio, array('SynchToFic', 'PicToPip'), true)) {
-        wp_redirect($returnUrl); exit;
-    }
-
+    // $returnUrl definito prima di qualsiasi redirect (incluse le validazioni whitelist)
     $page      = get_page_by_path('area-riservata');
     $baseRet   = $page ? get_permalink($page->ID) : home_url('/');
     $returnUrl = add_query_arg('section', 'fatturazione', remove_query_arg(
         array('billing_msg', 'billing_success', 'billing_cancelled', 'section'), $baseRet
     ));
+
+    // Whitelist servizi — solo valori attesi accettati
+    if (!in_array($servizio, array('SynchToFic', 'PicToPip'), true)) {
+        wp_redirect($returnUrl); exit;
+    }
 
     switch ($action) {
 

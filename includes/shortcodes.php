@@ -1717,7 +1717,9 @@ add_shortcode('sibia_portal', function () {
                         <?php $_stdAttivo = ($_isAttivo && $_abbPianoAttuale === 'standard'); ?>
                         <div class="sibia-abb-card<?php echo $_stdAttivo ? ' sibia-abb-card--current' : ''; ?>"
                             data-price-mensile="<?php echo esc_attr($_abbPrezzo['standard']['mensile']); ?>"
-                            data-price-annuale="<?php echo esc_attr($_abbPrezzo['standard']['annuale']); ?>">
+                            data-price-annuale="<?php echo esc_attr($_abbPrezzo['standard']['annuale']); ?>"
+                            data-url-mensile="<?php echo $_stdAttivo ? '' : '#'; ?>"
+                            data-url-annuale="<?php echo $_stdAttivo ? '' : '#'; ?>">
                             <div class="sibia-abb-card__name">Standard</div>
                             <div class="sibia-abb-card__price">
                                 <span class="sibia-abb-card__amount" data-role="amount"><?php echo esc_html($_abbPrezzo['standard']['mensile']); ?></span>
@@ -1762,7 +1764,9 @@ add_shortcode('sibia_portal', function () {
                         <?php $_proAttivo = ($_isAttivo && $_abbPianoAttuale === 'professional'); ?>
                         <div class="sibia-abb-card sibia-abb-card--featured<?php echo $_proAttivo ? ' sibia-abb-card--current' : ''; ?>"
                             data-price-mensile="<?php echo esc_attr($_abbPrezzo['professional']['mensile']); ?>"
-                            data-price-annuale="<?php echo esc_attr($_abbPrezzo['professional']['annuale']); ?>">
+                            data-price-annuale="<?php echo esc_attr($_abbPrezzo['professional']['annuale']); ?>"
+                            data-url-mensile="<?php echo $_proAttivo ? '' : '#'; ?>"
+                            data-url-annuale="<?php echo $_proAttivo ? '' : '#'; ?>">
                             <div class="sibia-abb-card__badge"><?php echo $_proAttivo ? '&#10003; Attivo' : 'Consigliato'; ?></div>
                             <div class="sibia-abb-card__name">Professional</div>
                             <div class="sibia-abb-card__price">
