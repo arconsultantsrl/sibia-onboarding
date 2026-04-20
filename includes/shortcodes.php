@@ -185,7 +185,7 @@ add_shortcode('sibia_onboarding', function () {
 
         <?php if (!empty($notice)) : ?>
             <div class="sibia-step">
-                <?php echo $notice; ?>
+                <?php echo wp_kses($notice, array('div'=>array('class'=>array()),'p'=>array(),'strong'=>array(),'a'=>array('href'=>array(),'class'=>array()),'br'=>array(),'span'=>array('class'=>array()))); ?>
             </div>
         <?php endif; ?>
 
@@ -381,7 +381,7 @@ add_shortcode('sibia_portal', function () {
                 </div>
 
                 <?php if ($activeSection === 'registrazione' && !empty($notice)) : ?>
-                    <div class="<?php echo esc_attr($panelClass); ?>"><?php echo $notice; ?></div>
+                    <div class="<?php echo esc_attr($panelClass); ?>"><?php echo wp_kses($notice, array('div'=>array('class'=>array()),'p'=>array(),'strong'=>array(),'a'=>array('href'=>array(),'class'=>array()),'br'=>array(),'span'=>array('class'=>array()))); ?></div>
                 <?php endif; ?>
 
                 <!-- Form dati anagrafici -->
@@ -543,7 +543,7 @@ add_shortcode('sibia_portal', function () {
                         <p>Field Service Management</p>
                     </div>
                     <?php if ($activeSection === 'prodotti' && !empty($notice)) : ?>
-                        <div class="<?php echo esc_attr($panelClass); ?>"><?php echo $notice; ?></div>
+                        <div class="<?php echo esc_attr($panelClass); ?>"><?php echo wp_kses($notice, array('div'=>array('class'=>array()),'p'=>array(),'strong'=>array(),'a'=>array('href'=>array(),'class'=>array()),'br'=>array(),'span'=>array('class'=>array()))); ?></div>
                     <?php endif; ?>
                     <div class="sibia-step">
                         <div class="sibia-step__title">Configurazione</div>
@@ -613,7 +613,7 @@ add_shortcode('sibia_portal', function () {
                         <?php endif; ?>
                     </div>
                     <?php if ($activeSection === 'soluzioni' && !empty($notice)) : ?>
-                        <div class="<?php echo esc_attr($panelClass); ?>"><?php echo $notice; ?></div>
+                        <div class="<?php echo esc_attr($panelClass); ?>"><?php echo wp_kses($notice, array('div'=>array('class'=>array()),'p'=>array(),'strong'=>array(),'a'=>array('href'=>array(),'class'=>array()),'br'=>array(),'span'=>array('class'=>array()))); ?></div>
                     <?php endif; ?>
 
                     <!-- Download Installer -->
@@ -734,7 +734,7 @@ add_shortcode('sibia_portal', function () {
                         <?php endif; ?>
                     </div>
                     <?php if ($activeSection === 'soluzioni' && !empty($notice)) : ?>
-                        <div class="<?php echo esc_attr($panelClass); ?>"><?php echo $notice; ?></div>
+                        <div class="<?php echo esc_attr($panelClass); ?>"><?php echo wp_kses($notice, array('div'=>array('class'=>array()),'p'=>array(),'strong'=>array(),'a'=>array('href'=>array(),'class'=>array()),'br'=>array(),'span'=>array('class'=>array()))); ?></div>
                     <?php endif; ?>
 
                     <!-- Banner stato connessioni -->
@@ -790,7 +790,7 @@ add_shortcode('sibia_portal', function () {
                             <span style="color:#555;font-size:13px;margin-left:8px;">&bull; <?php echo esc_html($_recUsati); ?> / <?php echo esc_html($_recLimite); ?> sincronizzazioni</span>
                             <span style="margin-left:8px;font-size:12px;background:#c8e6c9;color:#1b5e20;padding:2px 7px;border-radius:10px;"><?php echo $_pianoAttuale === 'professional' ? '&#9889; Professional' : 'Standard'; ?></span>
                         </div>
-                        <a href="<?php echo $_billingUrl; ?>" class="sibia-btn sibia-btn--primary" style="white-space:nowrap;font-size:13px;padding:6px 14px;">Abbonati ora</a>
+                        <a href="<?php echo esc_url($_billingUrl); ?>" class="sibia-btn sibia-btn--primary" style="white-space:nowrap;font-size:13px;padding:6px 14px;">Abbonati ora</a>
                     </div>
                     <?php elseif ($_sytBillingStato === 'attivo') :
                         $_pianoAtt  = $sytFicBillingItem['piano']      ?? 'standard';
@@ -1004,13 +1004,13 @@ add_shortcode('sibia_portal', function () {
                                 <div class="sibia-pending-card__meta" style="display:flex;flex-wrap:wrap;gap:4px 16px;margin-top:4px;font-size:13px;">
                                     <span>Tipo: <strong>Cliente</strong></span>
                                     <?php if ($pendMyId) : ?>
-                                    <span>Codice personalizzato: <strong><?php echo $pendMyId; ?></strong></span>
+                                    <span>Codice personalizzato: <strong><?php echo esc_html($pendMyId); ?></strong></span>
                                     <?php endif; ?>
                                     <?php if ($pendPiva) : ?>
-                                    <span>P.IVA: <?php echo $pendPiva; ?></span>
+                                    <span>P.IVA: <?php echo esc_html($pendPiva); ?></span>
                                     <?php endif; ?>
                                     <?php if ($pendAddr) : ?>
-                                    <span>Indirizzo: <?php echo $pendAddr; ?></span>
+                                    <span>Indirizzo: <?php echo esc_html($pendAddr); ?></span>
                                     <?php endif; ?>
                                 </div>
                             </div>
@@ -1019,7 +1019,7 @@ add_shortcode('sibia_portal', function () {
                                 <form method="post">
                                     <?php wp_nonce_field('sibia_sytfic_risolvi_' . $pendId, 'sibia_sytfic_risolvi_nonce'); ?>
                                     <input type="hidden" name="sibia_sytfic_risolvi_submit" value="1" />
-                                    <input type="hidden" name="sytfic_pendente_id" value="<?php echo $pendId; ?>" />
+                                    <input type="hidden" name="sytfic_pendente_id" value="<?php echo esc_attr($pendId); ?>" />
                                     <input type="hidden" name="sytfic_azione" value="associa" />
                                     <?php if (!$pendPiva && !$hasPivaMatch) : ?>
                                     <p style="margin:0 0 10px;font-size:13px;color:#92400e;background:#fef3c7;border:1px solid #fcd34d;border-radius:6px;padding:8px 12px;line-height:1.5;">
@@ -1299,7 +1299,7 @@ add_shortcode('sibia_portal', function () {
                         'demo_err'     => array('err', 'Errore durante l\'attivazione della demo. Riprova più tardi.'),
                         'cancella_ok'              => array('ok',  'Abbonamento disdetto. Il servizio è stato disattivato.'),
                         'cancella_fine_periodo_ok' => array('ok',  'Abbonamento disdetto. Il servizio resterà attivo fino alla fine del periodo corrente.'),
-                        'cancella_err'             => array('err', 'Errore durante la disdetta. Contatta il supporto a supporto@sibia.it.'),
+                        'cancella_err'             => array('err', 'Errore durante la disdetta. Contatta il supporto a ' . sibia_onboarding_get_option('sibia_support_email', 'supporto@sibia.it') . '.'),
                         'checkout_err' => array('err', 'Errore durante la creazione del pagamento. Riprova.'),
                         'portal_err'   => array('err', 'Errore durante l\'accesso al portale di fatturazione. Riprova.'),
                     );
@@ -1814,8 +1814,9 @@ add_shortcode('sibia_portal', function () {
                         &#10003; Disdici quando vuoi &nbsp;&bull;&nbsp; &#128274; Pagamento sicuro via Stripe &nbsp;&bull;&nbsp; Nessun vincolo
                     </p>
                     <?php endif; ?>
+                    <?php $sibia_support = esc_attr(sibia_onboarding_get_option('sibia_support_email', 'supporto@sibia.it')); ?>
                     <p class="sibia-abbonamento__support" style="text-align:center;margin-top:6px;">
-                        Hai domande? <a href="mailto:supporto@sibia.it">supporto@sibia.it</a>
+                        Hai domande? <a href="mailto:<?php echo $sibia_support; ?>"><?php echo esc_html($sibia_support); ?></a>
                     </p>
                 </div>
             <?php endif; ?>

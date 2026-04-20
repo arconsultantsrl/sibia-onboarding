@@ -558,7 +558,8 @@ add_shortcode('sibia_guida_installazione', function () {
 
         <div class="sibia-guide__footer">
             <p><strong>Hai bisogno di aiuto?</strong></p>
-            <p>Contatta il supporto SIBIA: <a href="mailto:supporto@sibia.it">supporto@sibia.it</a></p>
+            <?php $sibia_support = esc_attr(sibia_onboarding_get_option('sibia_support_email', 'supporto@sibia.it')); ?>
+            <p>Contatta il supporto SIBIA: <a href="mailto:<?php echo $sibia_support; ?>"><?php echo esc_html($sibia_support); ?></a></p>
             <p style="margin-top: 16px; font-size: 13px;">&copy; 2026 SIBIA &mdash; Tutti i diritti riservati</p>
         </div>
     </div>

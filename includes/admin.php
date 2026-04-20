@@ -19,6 +19,7 @@ add_action('admin_init', function () {
     register_setting('sibia_onboarding_settings', 'sibia_onboarding_api_base');
     register_setting('sibia_onboarding_settings', 'sibia_onboarding_secret');
     register_setting('sibia_onboarding_settings', 'sibia_onboarding_header');
+    register_setting('sibia_onboarding_settings', 'sibia_support_email');
 
     add_settings_section(
         'sibia_onboarding_main',
@@ -55,6 +56,17 @@ add_action('admin_init', function () {
         function () {
             $value = esc_attr(sibia_onboarding_get_option('sibia_onboarding_header', 'X-ONBOARDING-KEY'));
             echo "<input type=\"text\" class=\"regular-text\" name=\"sibia_onboarding_header\" value=\"{$value}\" />";
+        },
+        'sibia-onboarding',
+        'sibia_onboarding_main'
+    );
+
+    add_settings_field(
+        'sibia_support_email',
+        'Email supporto',
+        function () {
+            $value = esc_attr(sibia_onboarding_get_option('sibia_support_email', 'supporto@sibia.it'));
+            echo "<input type=\"email\" class=\"regular-text\" name=\"sibia_support_email\" value=\"{$value}\" />";
         },
         'sibia-onboarding',
         'sibia_onboarding_main'
