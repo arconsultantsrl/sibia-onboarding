@@ -133,23 +133,10 @@ add_action('wp_loaded', function () {
                 wp_redirect($returnUrl); exit;
             }
 
-            // Upgrade tier (Standard → Professional): attiva funzionalità subito nel backend
-            $tierUp = ($nuovoPiano === 'professional');
-            if ($tierUp) {
-                $sytFicCfg = sibia_get_sytfic_status($email);
-                if (!empty($sytFicCfg['configured'])) {
-                    sibia_save_sytfic_config(
-                        $email,
-                        $sytFicCfg['synchroteamDomain'] ?? '',
-                        '••••••••', // chiave mascherata → non aggiornata
-                        $sytFicCfg['triggerJob'] ?? 'completed',
-                        $sytFicCfg['productIdOre'] ?? null,
-                        true // articoli abilitati per Professional
-                    );
-                }
-                // Aggiorna stato nel database SIBIA al nuovo piano
-                sibia_billing_aggiorna_membership($email, $servizio, 'attivo', $nuovoIntervallo, $nuovoPiano);
-            }
+            // Lo stato nel database viene aggiornato solo dopo il pagamento completato,
+            // tramite il webhook checkout.session.completed ricevuto da ApiConnect.
+            // Non si aggiorna qui per evitare che il cliente abbia accesso al piano
+            // superiore senza averlo ancora pagato.
 
             // Salva piano schedulato (per riferimento interno)
             sibia_set_piano_schedulato($user->ID, $servizio, $nuovoPiano, $nuovoIntervallo);
@@ -306,49 +293,22 @@ function sibia_billing_aggiorna_membership($email, $servizio, $stato, $intervall
  */
 function sibia_get_prezzi_piani($servizio = 'SynchToFic')
 {
-    static $cache = array();
-    if (isset($cache[$servizio])) return $cache[$servizio];
-
-    $default = array(
-        'standard'     => array('mensile' => array('euroMeseDisplay' => 25, 'euroTotale' => 25),
-                                'annuale' => array('euroMeseDisplay' => 21, 'euroTotale' => 252)),
-        'professional' => array('mensile' => array('euroMeseDisplay' => 45, 'euroTotale' => 45),
-                                'annuale' => array('euroMeseDisplay' => 35, 'euroTotale' => 420)),
+    // Prezzi netti (IVA esclusa) per la visualizzazione nel portale clienti.
+    // I prezzi effettivamente addebitati sono quelli configurati su Stripe (lordi IVA inclusa).
+    static $prezzi = array(
+        'SynchToFic' => array(
+            'standard'     => array(
+                'mensile' => array('euroMeseDisplay' => 25, 'euroTotale' => 25),
+                'annuale' => array('euroMeseDisplay' => 21, 'euroTotale' => 252),
+            ),
+            'professional' => array(
+                'mensile' => array('euroMeseDisplay' => 45, 'euroTotale' => 45),
+                'annuale' => array('euroMeseDisplay' => 35, 'euroTotale' => 420),
+            ),
+        ),
     );
 
-    $baseUrl = rtrim(sibia_onboarding_get_option('sibia_onboarding_api_base', 'https://api.cloud-ar.it/api/v1'), '/');
-    $header  = sibia_onboarding_get_option('sibia_onboarding_header', 'X-ONBOARDING-KEY');
-    $secret  = sibia_onboarding_get_option('sibia_onboarding_secret', '');
-
-    $url      = add_query_arg(array('servizio' => $servizio), $baseUrl . '/billing/prezzi');
-    $response = wp_remote_get($url, array(
-        'timeout' => 10,
-        'headers' => array($header => $secret),
-    ));
-
-    if (is_wp_error($response)) {
-        $cache[$servizio] = $default;
-        return $default;
-    }
-
-    $body = json_decode(wp_remote_retrieve_body($response), true);
-    if (empty($body['success']) || empty($body['data']['prezzi'])) {
-        $cache[$servizio] = $default;
-        return $default;
-    }
-
-    $result = array();
-    foreach ($body['data']['prezzi'] as $item) {
-        $p = strtolower($item['piano']      ?? 'standard');
-        $i = strtolower($item['intervallo'] ?? 'mensile');
-        $result[$p][$i] = array(
-            'euroMeseDisplay' => floatval($item['euroMeseDisplay'] ?? 0),
-            'euroTotale'      => floatval($item['euroTotale']      ?? 0),
-        );
-    }
-
-    $cache[$servizio] = !empty($result) ? $result : $default;
-    return $cache[$servizio];
+    return $prezzi[$servizio] ?? $prezzi['SynchToFic'];
 }
 
 
