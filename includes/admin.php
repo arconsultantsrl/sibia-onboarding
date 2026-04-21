@@ -65,7 +65,7 @@ add_action('admin_init', function () {
         'sibia_support_email',
         'Email supporto',
         function () {
-            $value = esc_attr(sibia_onboarding_get_option('sibia_support_email', 'supporto@sibia.it'));
+            $value = esc_attr(sibia_onboarding_get_option('sibia_support_email', 'info@sibia.it'));
             echo "<input type=\"email\" class=\"regular-text\" name=\"sibia_support_email\" value=\"{$value}\" />";
         },
         'sibia-onboarding',

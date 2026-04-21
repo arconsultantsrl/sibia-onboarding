@@ -1299,7 +1299,7 @@ add_shortcode('sibia_portal', function () {
                         'demo_err'     => array('err', 'Errore durante l\'attivazione della demo. Riprova più tardi.'),
                         'cancella_ok'              => array('ok',  'Abbonamento disdetto. Il servizio è stato disattivato.'),
                         'cancella_fine_periodo_ok' => array('ok',  'Abbonamento disdetto. Il servizio resterà attivo fino alla fine del periodo corrente.'),
-                        'cancella_err'             => array('err', 'Errore durante la disdetta. Contatta il supporto a ' . sibia_onboarding_get_option('sibia_support_email', 'supporto@sibia.it') . '.'),
+                        'cancella_err'             => array('err', 'Errore durante la disdetta. Contatta il supporto a ' . sibia_onboarding_get_option('sibia_support_email', 'info@sibia.it') . '.'),
                         'checkout_err' => array('err', 'Errore durante la creazione del pagamento. Riprova.'),
                         'portal_err'   => array('err', 'Errore durante l\'accesso al portale di fatturazione. Riprova.'),
                     );
@@ -1814,7 +1814,7 @@ add_shortcode('sibia_portal', function () {
                         &#10003; Disdici quando vuoi &nbsp;&bull;&nbsp; &#128274; Pagamento sicuro via Stripe &nbsp;&bull;&nbsp; Nessun vincolo
                     </p>
                     <?php endif; ?>
-                    <?php $sibia_support = esc_attr(sibia_onboarding_get_option('sibia_support_email', 'supporto@sibia.it')); ?>
+                    <?php $sibia_support = esc_attr(sibia_onboarding_get_option('sibia_support_email', 'info@sibia.it')); ?>
                     <p class="sibia-abbonamento__support" style="text-align:center;margin-top:6px;">
                         Hai domande? <a href="mailto:<?php echo $sibia_support; ?>"><?php echo esc_html($sibia_support); ?></a>
                     </p>
