@@ -77,12 +77,19 @@ add_action('login_init', function () {
 });
 
 
-// Verifica email: un solo click dal link nell'email → account Verified, nient'altro.
-// Hook: 'init' priorità 5 — si attiva su QUALSIASI URL, nessun is_page() che può fallire.
-// URL verifica: home_url('/?sibia_verifica=TOKEN') — indipendente dallo slug della pagina.
-// Il token è monouso: dopo il primo click viene eliminato. Qualsiasi click successivo
-// (incluso scanner email che pre-carica il link) vede il token assente → errore.
-// L'utente è comunque Verified nel database e può fare login normalmente.
+// Verifica email in due fasi per resistere ai bot antivirus/scanner.
+//
+// Problema: i sistemi di sicurezza email (Safe Links, Barracuda, Proofpoint, ecc.)
+// aprono automaticamente i link in entrata via GET per verificare che non siano
+// pericolosi. Con il vecchio approccio monouso, il bot consumava il token prima
+// che l'utente potesse cliccare → "Link già utilizzato o scaduto".
+//
+// Soluzione: GET mostra una pagina di conferma intermedia (il bot la vede ma non
+// interagisce). Il POST dal pulsante "Attiva" esegue la verifica reale e consuma
+// il token. I bot non fanno mai POST su form, quindi il token sopravvive.
+//
+// Hook: 'init' priorità 5 — si attiva su QUALSIASI URL.
+// URL verifica: home_url('/?sibia_verifica=TOKEN')
 add_action('init', function () {
     if (!isset($_GET['sibia_verifica'])) return;
 
@@ -93,6 +100,7 @@ add_action('init', function () {
     $errUrl  = add_query_arg('sibia_verifica_err', '1',
         $pageReg ? get_permalink($pageReg->ID) : home_url('/registrazione/'));
 
+    // Validazione token (senza eliminarlo ancora)
     if (!$data || !is_array($data) || empty($data['uid']) || empty($data['exp'])
         || $data['exp'] < time() || !get_userdata($data['uid'])) {
         wp_redirect($errUrl);
@@ -100,15 +108,67 @@ add_action('init', function () {
     }
 
     $user_id = (int) $data['uid'];
-    delete_option('sibia_ev_' . $token);
 
-    // Segna l'email come verificata nel profilo utente (campo proprio SIBIA).
-    update_user_meta($user_id, 'sibia_email_verificata', 1);
-    clean_user_cache($user_id);
+    // POST con nonce valido → verifica reale (i bot non fanno POST sui form)
+    if ($_SERVER['REQUEST_METHOD'] === 'POST'
+        && isset($_POST['sibia_verifica_nonce'])
+        && wp_verify_nonce(
+            sanitize_text_field(wp_unslash($_POST['sibia_verifica_nonce'])),
+            'sibia_conferma_' . $token
+        )) {
+        delete_option('sibia_ev_' . $token);
+        update_user_meta($user_id, 'sibia_email_verificata', 1);
+        clean_user_cache($user_id);
 
-    $okUrl = add_query_arg('sibia_ok', '1',
-        $pageReg ? get_permalink($pageReg->ID) : home_url('/registrazione/'));
-    wp_redirect($okUrl);
+        $okUrl = add_query_arg('sibia_ok', '1',
+            $pageReg ? get_permalink($pageReg->ID) : home_url('/registrazione/'));
+        wp_redirect($okUrl);
+        exit;
+    }
+
+    // GET (o POST senza nonce valido) → pagina di conferma intermedia
+    // Il token rimane intatto; il bot vede questa pagina ma non clicca il pulsante.
+    $action_url = home_url('/?sibia_verifica=' . urlencode($token));
+    $nonce      = wp_create_nonce('sibia_conferma_' . $token);
+    $logo_url   = 'https://sibia.it/wp-content/uploads/2025/06/favicon-sibia.png';
+
+    nocache_headers();
+    header('Content-Type: text/html; charset=UTF-8');
+    echo '<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Conferma indirizzo email &#8212; SIBIA</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#00072d;font-family:"DM Sans","Helvetica Neue",Arial,sans-serif;
+     display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px}
+.card{background:#fff;border-radius:18px;box-shadow:0 8px 40px rgba(0,7,45,.4);
+      max-width:440px;width:100%;padding:40px 32px;text-align:center}
+.logo{width:58px;height:58px;border-radius:50%;margin:0 auto 20px;display:block}
+h1{font-family:"Raleway","Helvetica Neue",Arial,sans-serif;font-size:22px;
+   font-weight:700;color:#1c2b3a;margin-bottom:12px}
+p{font-size:15px;color:#61758b;line-height:1.6;margin-bottom:28px}
+button{background:#1f5fa6;color:#fff;border:none;border-radius:50px;
+       padding:14px 32px;font-size:16px;font-weight:600;cursor:pointer;
+       width:100%;transition:background .2s}
+button:hover{background:#174a85}
+</style>
+</head>
+<body>
+<div class="card">
+  <img src="' . esc_attr($logo_url) . '" alt="SIBIA" class="logo">
+  <h1>Conferma il tuo indirizzo email</h1>
+  <p>Stai per attivare il tuo account su <strong>SIBIA</strong>.<br>
+     Clicca il pulsante qui sotto per completare la registrazione.</p>
+  <form method="post" action="' . esc_attr($action_url) . '">
+    <input type="hidden" name="sibia_verifica_nonce" value="' . esc_attr($nonce) . '">
+    <button type="submit">Attiva il mio account</button>
+  </form>
+</div>
+</body>
+</html>';
     exit;
 }, 5);
 
