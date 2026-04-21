@@ -37,10 +37,10 @@ section:has(.sibia-portal) ~ section:not(footer) {
 .sibia-onboarding {
     font-family: 'DM Sans', sans-serif;
     color: var(--sibia-ink);
-    background: var(--sibia-bg);
+    background: #ffffff;
     padding: 32px 24px 48px;
     border-radius: 18px;
-    box-shadow: var(--sibia-shadow-lg);
+    box-shadow: 0 8px 40px rgba(10, 20, 50, 0.18);
 }
 .sibia-hero {
     display: grid;
