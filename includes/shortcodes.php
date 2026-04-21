@@ -2814,11 +2814,11 @@ add_shortcode('sibia_registrazione', function () {
 
     ob_start();
     ?>
-    <div class="sibia-onboarding" style="max-width:480px;margin:0 auto;">
-        <div class="sibia-hero" style="text-align:center;margin-bottom:24px;">
-            <img src="<?php echo esc_url($logo_url); ?>" alt="SIBIA" style="width:54px;height:54px;border-radius:50%;margin-bottom:12px;">
-            <h1 style="font-family:'Raleway',sans-serif;font-size:26px;font-weight:700;color:var(--sibia-ink,#1c2b3a);margin:0 0 6px;">Registrati su SIBIA</h1>
-            <p style="color:var(--sibia-muted,#61758b);margin:0;">Crea il tuo account gratuito</p>
+    <div class="sibia-onboarding" style="max-width:480px;margin:0 auto;background:#ffffff;box-shadow:0 8px 40px rgba(10,20,50,0.18);">
+        <div style="text-align:center;margin-bottom:28px;padding-bottom:24px;border-bottom:1px solid #d6e1ee;">
+            <img src="<?php echo esc_url($logo_url); ?>" alt="SIBIA" style="width:58px;height:58px;border-radius:50%;margin:0 auto 14px;display:block;">
+            <h1 style="font-family:'Raleway',sans-serif;font-size:26px;font-weight:700;color:#1c2b3a;margin:0 0 6px;">Registrati su SIBIA</h1>
+            <p style="color:#61758b;margin:0;font-size:15px;">Crea il tuo account gratuito</p>
         </div>
 
         <?php if ($success) : ?>
