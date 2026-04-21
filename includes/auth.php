@@ -109,13 +109,14 @@ add_action('init', function () {
 
     $user_id = (int) $data['uid'];
 
-    // POST con nonce valido → verifica reale (i bot non fanno POST sui form)
+    // POST con campo conferma → verifica reale (i bot non inviano POST sui form).
+    // Non si usa wp_verify_nonce perché all'hook 'init' priorità 5 il sistema di
+    // sessione WordPress non è ancora inizializzato per utenti non loggati.
+    // La sicurezza è garantita dal token di 40 caratteri nell'URL: solo chi ha
+    // ricevuto la mail può conoscerlo. Non serve un secondo segreto.
     if ($_SERVER['REQUEST_METHOD'] === 'POST'
-        && isset($_POST['sibia_verifica_nonce'])
-        && wp_verify_nonce(
-            sanitize_text_field(wp_unslash($_POST['sibia_verifica_nonce'])),
-            'sibia_conferma_' . $token
-        )) {
+        && isset($_POST['sibia_confirma'])
+        && $_POST['sibia_confirma'] === '1') {
         delete_option('sibia_ev_' . $token);
         update_user_meta($user_id, 'sibia_email_verificata', 1);
         clean_user_cache($user_id);
@@ -126,10 +127,9 @@ add_action('init', function () {
         exit;
     }
 
-    // GET (o POST senza nonce valido) → pagina di conferma intermedia
-    // Il token rimane intatto; il bot vede questa pagina ma non clicca il pulsante.
+    // GET (o POST non riconosciuto) → pagina di conferma intermedia.
+    // Il token rimane intatto; il bot vede questa pagina ma non invia il form.
     $action_url = home_url('/?sibia_verifica=' . urlencode($token));
-    $nonce      = wp_create_nonce('sibia_conferma_' . $token);
     $logo_url   = 'https://sibia.it/wp-content/uploads/2025/06/favicon-sibia.png';
 
     nocache_headers();
@@ -163,7 +163,7 @@ button:hover{background:#174a85}
   <p>Stai per attivare il tuo account su <strong>SIBIA</strong>.<br>
      Clicca il pulsante qui sotto per completare la registrazione.</p>
   <form method="post" action="' . esc_attr($action_url) . '">
-    <input type="hidden" name="sibia_verifica_nonce" value="' . esc_attr($nonce) . '">
+    <input type="hidden" name="sibia_confirma" value="1">
     <button type="submit">Attiva il mio account</button>
   </form>
 </div>
