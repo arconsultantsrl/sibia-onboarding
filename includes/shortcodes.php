@@ -2763,28 +2763,25 @@ add_shortcode('sibia_registrazione', function () {
                 if (email_exists($email)) {
                     $errors[] = 'Questo indirizzo email è già registrato. <a href="' . esc_url(wp_login_url()) . '">Accedi</a>';
                 } else {
-                    // Sopprime la mail di verifica MemberPress (oggetto noto) durante la nostra registrazione.
-                    // Il filtro viene rimosso subito dopo wp_create_user() per non interferire con altro.
-                    $sibia_suppress_fn = function ($args) {
-                        if (isset($args['subject']) &&
-                            stripos($args['subject'], 'Verifica il tuo indirizzo email') !== false) {
-                            $args['to'] = 'noreply@void.invalid';
-                        }
-                        return $args;
-                    };
-                    add_filter('wp_mail', $sibia_suppress_fn, 1);
+                    // Disabilita User Verification (PickPlugins) durante wp_create_user() per evitare
+                    // che UV invii una propria email di verifica in parallelo alla nostra.
+                    // Il filtro user_verification_enable viene rimosso subito dopo la creazione.
+                    $sibia_uv_skip = function ($enable, $user_id) { return 'no'; };
+                    add_filter('user_verification_enable', $sibia_uv_skip, 10, 2);
                     $user_id = wp_create_user($email, $password, $email);
-                    remove_filter('wp_mail', $sibia_suppress_fn, 1);
+                    remove_filter('user_verification_enable', $sibia_uv_skip, 10);
 
                     if (is_wp_error($user_id)) {
                         $errors[] = 'Errore durante la registrazione: ' . esc_html($user_id->get_error_message());
                     } else {
                         wp_update_user(['ID' => $user_id, 'display_name' => strstr($email, '@', true)]);
 
-                        // Cancella subito user_activation_key: MemberPress lo imposta durante wp_create_user()
-                        // ma SIBIA gestisce la propria verifica email tramite token. L'utente nasce già
-                        // "Verified" per MemberPress; l'accesso al portale rimane bloccato finché non
-                        // completa la verifica SIBIA (sibia_email_verificata in user_meta).
+                        // Blocca il login tramite User Verification finché SIBIA non completa la verifica.
+                        // UV controlla user_activation_status: 0 = in attesa, 1 = verificato.
+                        // Lo impostiamo a 1 in auth.php al completamento della verifica SIBIA.
+                        update_user_meta($user_id, 'user_activation_status', 0);
+
+                        // Cancella user_activation_key di WordPress (campo legacy, non più usato).
                         global $wpdb;
                         $wpdb->update($wpdb->users, ['user_activation_key' => ''], ['ID' => $user_id]);
 

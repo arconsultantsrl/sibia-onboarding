@@ -119,14 +119,16 @@ add_action('init', function () {
         && $_POST['sibia_confirma'] === '1') {
         delete_option('sibia_ev_' . $token);
         update_user_meta($user_id, 'sibia_email_verificata', 1);
+        // Segna l'utente come verificato in User Verification (PickPlugins).
+        // Senza questa riga, uv_user_authentication() blocca wp_signon() con WP_Error.
+        update_user_meta($user_id, 'user_activation_status', 1);
 
-        // Salvaguardia: assicura che user_activation_key sia vuoto anche se
-        // la cancellazione alla registrazione non fosse avvenuta (es. utenti già esistenti).
+        // Salvaguardia: assicura che user_activation_key sia vuoto.
         global $wpdb;
         $wpdb->update($wpdb->users, ['user_activation_key' => ''], ['ID' => $user_id]);
         clean_user_cache($user_id);
 
-        // Auto-login: bypassa wp_authenticate_user di MemberPress.
+        // Auto-login: bypassa il filtro 'authenticate' di User Verification (PickPlugins).
         // wp_set_auth_cookie non passa per il flusso di login → nessun blocco.
         wp_set_auth_cookie($user_id, false);
         $portalPage = get_page_by_path('area-riservata');
