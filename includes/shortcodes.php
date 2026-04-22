@@ -2781,8 +2781,12 @@ add_shortcode('sibia_registrazione', function () {
                     } else {
                         wp_update_user(['ID' => $user_id, 'display_name' => strstr($email, '@', true)]);
 
-                        // L'utente rimane Unverified (user_activation_key impostato da MemberPress).
-                        // Diventa Verified solo quando clicca il bottone nell'email di verifica.
+                        // Cancella subito user_activation_key: MemberPress lo imposta durante wp_create_user()
+                        // ma SIBIA gestisce la propria verifica email tramite token. L'utente nasce già
+                        // "Verified" per MemberPress; l'accesso al portale rimane bloccato finché non
+                        // completa la verifica SIBIA (sibia_email_verificata in user_meta).
+                        global $wpdb;
+                        $wpdb->update($wpdb->users, ['user_activation_key' => ''], ['ID' => $user_id]);
 
                         // Genera token di verifica (valido 48 ore) — wp_options per persistenza
                         // anche con cache esterna (Redis/Memcached).

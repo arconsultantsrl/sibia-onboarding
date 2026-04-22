@@ -120,8 +120,8 @@ add_action('init', function () {
         delete_option('sibia_ev_' . $token);
         update_user_meta($user_id, 'sibia_email_verificata', 1);
 
-        // Usa $wpdb->update diretto: bypassa filtri WordPress/MemberPress
-        // che re-imposterebbero user_activation_key tramite profile_update hook.
+        // Salvaguardia: assicura che user_activation_key sia vuoto anche se
+        // la cancellazione alla registrazione non fosse avvenuta (es. utenti già esistenti).
         global $wpdb;
         $wpdb->update($wpdb->users, ['user_activation_key' => ''], ['ID' => $user_id]);
         clean_user_cache($user_id);
