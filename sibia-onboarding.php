@@ -2,7 +2,7 @@
 /**
  * Plugin Name: SIBIA Onboarding
  * Description: Pagina di onboarding e gestione sincronizzazioni per SIBIA.
- * Version: 2.84.11
+ * Version: 2.84.12
  * GitHub Plugin URI: arconsultantsrl/sibia-onboarding
  * Primary Branch: main
  * Requires at least: 6.0

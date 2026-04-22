@@ -119,12 +119,19 @@ add_action('init', function () {
         && $_POST['sibia_confirma'] === '1') {
         delete_option('sibia_ev_' . $token);
         update_user_meta($user_id, 'sibia_email_verificata', 1);
-        wp_update_user(['ID' => $user_id, 'user_activation_key' => '']);
+
+        // Usa $wpdb->update diretto: bypassa filtri WordPress/MemberPress
+        // che re-imposterebbero user_activation_key tramite profile_update hook.
+        global $wpdb;
+        $wpdb->update($wpdb->users, ['user_activation_key' => ''], ['ID' => $user_id]);
         clean_user_cache($user_id);
 
-        $okUrl = add_query_arg('sibia_ok', '1',
-            $pageReg ? get_permalink($pageReg->ID) : home_url('/registrazione/'));
-        wp_redirect($okUrl);
+        // Auto-login: bypassa wp_authenticate_user di MemberPress.
+        // wp_set_auth_cookie non passa per il flusso di login → nessun blocco.
+        wp_set_auth_cookie($user_id, false);
+        $portalPage = get_page_by_path('area-riservata');
+        $portalUrl  = $portalPage ? get_permalink($portalPage->ID) : home_url('/area-riservata/');
+        wp_redirect($portalUrl);
         exit;
     }
 
