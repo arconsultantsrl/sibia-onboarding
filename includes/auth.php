@@ -211,6 +211,11 @@ add_action('template_redirect', function () {
     }
 });
 
+// Nasconde la barra WordPress agli utenti non amministratori
+add_filter('show_admin_bar', function ($show) {
+    return current_user_can('manage_options') ? $show : false;
+});
+
 // Dopo il login, reindirizza al plugin (non all'area admin)
 add_filter('login_redirect', function ($redirect_to, $requested_redirect_to, $user) {
     if ($user instanceof WP_User && !user_can($user, 'manage_options')) {
