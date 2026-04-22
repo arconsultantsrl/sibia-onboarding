@@ -41,8 +41,8 @@ add_action('template_redirect', function () {
         $portal = get_page_by_path('area-riservata');
         wp_redirect($portal ? get_permalink($portal->ID) : home_url('/area-riservata/'), 302);
     } else {
-        $account = get_page_by_path('account');
-        wp_redirect($account ? get_permalink($account->ID) : home_url('/account/'), 302);
+        $login = get_page_by_path('accesso');
+        wp_redirect($login ? get_permalink($login->ID) : home_url('/accesso/'), 302);
     }
     exit;
 }, 1);
@@ -181,25 +181,33 @@ button:hover{background:#174a85}
 }, 5);
 
 
-// La pagina di registrazione contiene un nonce. Se la pagina viene cachata
-// (plugin cache, CDN, Varnish) il nonce stale causa "Richiesta non valida" al primo submit.
-// nocache_headers() invia i header standard WordPress no-cache prima di qualsiasi output.
-// /account/ deve essere no-cache sempre: cambia in base allo stato di login e abbonamento.
-// Utenti già loggati su /account/ vengono rimandati al portale: MemberPress mostrerebbe
-// il form di login anche a utenti autenticati senza abbonamento attivo.
+// Le pagine di registrazione e accesso contengono nonce: no-cache obbligatorio.
+// /account/ e /accesso/ devono essere no-cache: il contenuto dipende dallo stato di login.
+// Utenti loggati su /account/ o /accesso/ → portale. Non loggati su /account/ → /accesso/.
 add_action('template_redirect', function () {
-    if (is_page('registrazione')) {
+    if (is_page('registrazione') || is_page('accesso')) {
         nocache_headers();
     }
     if (is_page('account')) {
-        nocache_headers(); // sempre: il contenuto dipende dallo stato di autenticazione
+        nocache_headers();
         if (is_user_logged_in()) {
             $portal = get_page_by_path('area-riservata');
             if ($portal) {
                 wp_redirect(get_permalink($portal->ID));
                 exit;
             }
+        } else {
+            // /account/ ospita il layout BeBuilder con il vecchio form MemberPress.
+            // I non-loggati vengono mandati sulla pagina SIBIA con [sibia_accedi].
+            $login = get_page_by_path('accesso');
+            wp_redirect($login ? get_permalink($login->ID) : home_url('/accesso/'));
+            exit;
         }
+    }
+    if (is_page('accesso') && is_user_logged_in()) {
+        $portal = get_page_by_path('area-riservata');
+        wp_redirect($portal ? get_permalink($portal->ID) : home_url('/area-riservata/'));
+        exit;
     }
 });
 
@@ -280,4 +288,22 @@ add_action('init', function () {
         ]);
     }
     set_transient('sibia_registrazione_page_v1', true, DAY_IN_SECONDS);
+});
+
+// Auto-creazione pagina /accesso/ con form di login SIBIA.
+// Rimpiazza la dipendenza dalla pagina /account/ (layout BeBuilder con vecchio form MemberPress).
+// I non-loggati vengono mandati qui da /accedi/ e da /account/.
+add_action('init', function () {
+    if (get_transient('sibia_accesso_page_v1')) return;
+    if (!get_page_by_path('accesso')) {
+        wp_insert_post([
+            'post_title'   => 'Accedi',
+            'post_name'    => 'accesso',
+            'post_content' => '[sibia_accedi]',
+            'post_status'  => 'publish',
+            'post_type'    => 'page',
+            'post_author'  => 1,
+        ]);
+    }
+    set_transient('sibia_accesso_page_v1', true, DAY_IN_SECONDS);
 });
