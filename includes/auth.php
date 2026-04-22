@@ -119,6 +119,7 @@ add_action('init', function () {
         && $_POST['sibia_confirma'] === '1') {
         delete_option('sibia_ev_' . $token);
         update_user_meta($user_id, 'sibia_email_verificata', 1);
+        wp_update_user(['ID' => $user_id, 'user_activation_key' => '']);
         clean_user_cache($user_id);
 
         $okUrl = add_query_arg('sibia_ok', '1',

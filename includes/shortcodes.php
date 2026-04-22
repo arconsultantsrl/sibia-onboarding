@@ -2749,6 +2749,17 @@ add_shortcode('sibia_registrazione', function () {
             }
 
             if (empty($errors)) {
+                // Limite: max 5 registrazioni per IP all'ora (anti-spam)
+                $ip_key    = 'sibia_reg_ip_' . md5($_SERVER['REMOTE_ADDR'] ?? '');
+                $tentativi = (int) get_transient($ip_key);
+                if ($tentativi >= 5) {
+                    $errors[] = 'Troppi tentativi di registrazione. Riprova tra un\'ora.';
+                } else {
+                    set_transient($ip_key, $tentativi + 1, HOUR_IN_SECONDS);
+                }
+            }
+
+            if (empty($errors)) {
                 if (email_exists($email)) {
                     $errors[] = 'Questo indirizzo email è già registrato. <a href="' . esc_url(wp_login_url()) . '">Accedi</a>';
                 } else {
