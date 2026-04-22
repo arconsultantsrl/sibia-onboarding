@@ -199,6 +199,12 @@ add_action('template_redirect', function () {
                 wp_redirect(get_permalink($portal->ID));
                 exit;
             }
+        } else {
+            // Senza MemberPress non c'è più il form di login su questa pagina.
+            // Redirect al login WordPress nativo; login_redirect filter (riga 207)
+            // riporta l'utente a /area-riservata/ dopo il login.
+            wp_redirect(wp_login_url(home_url('/area-riservata/')));
+            exit;
         }
     }
 });
