@@ -2978,6 +2978,122 @@ add_shortcode('sibia_registrazione', function () {
    Uso: inserire [sibia_prezzi] in una pagina WordPress (es. /prezzi/)
    ======================================================================== */
 
+/* ========================================================================
+   SHORTCODE: [sibia_accedi]
+   Form di login SIBIA con email e password.
+   Uso: inserire [sibia_accedi] nella pagina /account/
+   ======================================================================== */
+
+add_shortcode('sibia_accedi', function () {
+    // Se già loggato, rimanda al portale
+    if (is_user_logged_in()) {
+        $page = get_page_by_path('area-riservata');
+        $url  = $page ? get_permalink($page->ID) : home_url('/');
+        wp_redirect($url);
+        exit;
+    }
+
+    $errors = [];
+    $email  = '';
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['sibia_login_nonce'])) {
+        if (!wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['sibia_login_nonce'])), 'sibia_accedi')) {
+            $errors[] = 'Richiesta non valida. Riprova.';
+        } else {
+            $email    = sanitize_email(wp_unslash($_POST['sibia_login_email'] ?? ''));
+            $password = wp_unslash($_POST['sibia_login_password'] ?? '');
+
+            if (empty($email) || !is_email($email)) {
+                $errors[] = 'Inserisci un indirizzo email valido.';
+            } elseif (empty($password)) {
+                $errors[] = 'Inserisci la password.';
+            } else {
+                // Rate limiting: max 10 tentativi per IP ogni 15 minuti
+                $ip_key    = 'sibia_login_ip_' . md5($_SERVER['REMOTE_ADDR'] ?? '');
+                $tentativi = (int) get_transient($ip_key);
+                if ($tentativi >= 10) {
+                    $errors[] = 'Troppi tentativi di accesso. Riprova tra 15 minuti.';
+                } else {
+                    $user = wp_signon([
+                        'user_login'    => $email,
+                        'user_password' => $password,
+                        'remember'      => false,
+                    ], is_ssl());
+
+                    if (is_wp_error($user)) {
+                        set_transient($ip_key, $tentativi + 1, 15 * MINUTE_IN_SECONDS);
+                        $errors[] = 'Email o password non corretti.';
+                    } else {
+                        $page = get_page_by_path('area-riservata');
+                        $url  = $page ? get_permalink($page->ID) : home_url('/');
+                        wp_redirect($url);
+                        exit;
+                    }
+                }
+            }
+        }
+    }
+
+    $logo_url      = 'https://sibia.it/wp-content/uploads/2025/06/favicon-sibia.png';
+    $registra_url  = home_url('/registrazione/');
+    $reset_pwd_url = wp_lostpassword_url(home_url('/account/'));
+
+    ob_start();
+    ?>
+    <div class="sibia-onboarding" style="max-width:480px;margin:0 auto;background:#ffffff;box-shadow:0 8px 40px rgba(10,20,50,0.18);">
+        <div style="text-align:center;margin-bottom:28px;padding-bottom:24px;border-bottom:1px solid #d6e1ee;">
+            <img src="<?php echo esc_url($logo_url); ?>" alt="SIBIA" style="width:58px;height:58px;border-radius:50%;margin:0 auto 14px;display:block;">
+            <h1 style="font-family:'Raleway',sans-serif;font-size:26px;font-weight:700;color:#1c2b3a;margin:0 0 6px;">Accedi a SIBIA</h1>
+            <p style="color:#61758b;margin:0;font-size:15px;">Inserisci le tue credenziali per entrare</p>
+        </div>
+
+        <?php if (!empty($errors)) : ?>
+            <div style="margin-bottom:20px;background:#fee2e2;border:1px solid #fca5a5;border-radius:10px;padding:14px 18px;">
+                <?php foreach ($errors as $e) : ?>
+                    <p style="margin:0 0 4px;color:#dc2626;font-size:14px;"><?php echo wp_kses($e, ['a' => ['href' => []]]); ?></p>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+
+        <div class="sibia-step">
+            <form method="post" action="">
+                <?php wp_nonce_field('sibia_accedi', 'sibia_login_nonce'); ?>
+
+                <div style="margin-bottom:16px;">
+                    <label style="display:block;font-weight:600;margin-bottom:6px;color:var(--sibia-ink,#1c2b3a);">Indirizzo email</label>
+                    <input type="email" name="sibia_login_email"
+                           value="<?php echo esc_attr($email); ?>"
+                           placeholder="nome@azienda.it"
+                           required
+                           style="width:100%;padding:10px 14px;border:1px solid var(--sibia-border,#d6e1ee);border-radius:8px;font-size:15px;font-family:'DM Sans',sans-serif;box-sizing:border-box;">
+                </div>
+
+                <div style="margin-bottom:24px;">
+                    <label style="display:block;font-weight:600;margin-bottom:6px;color:var(--sibia-ink,#1c2b3a);">Password</label>
+                    <input type="password" name="sibia_login_password"
+                           placeholder="La tua password"
+                           required
+                           style="width:100%;padding:10px 14px;border:1px solid var(--sibia-border,#d6e1ee);border-radius:8px;font-size:15px;font-family:'DM Sans',sans-serif;box-sizing:border-box;">
+                </div>
+
+                <button type="submit" class="sibia-btn" style="width:100%;justify-content:center;">
+                    Accedi
+                </button>
+
+                <p style="text-align:center;margin-top:16px;font-size:14px;color:var(--sibia-muted,#61758b);">
+                    <a href="<?php echo esc_url($reset_pwd_url); ?>" style="color:var(--sibia-blue,#1f5fa6);">Password dimenticata?</a>
+                </p>
+
+                <p style="text-align:center;margin-top:8px;font-size:14px;color:var(--sibia-muted,#61758b);">
+                    Non hai ancora un account? <a href="<?php echo esc_url($registra_url); ?>" style="color:var(--sibia-blue,#1f5fa6);">Registrati</a>
+                </p>
+            </form>
+        </div>
+    </div>
+    <?php
+    return ob_get_clean();
+});
+
 add_shortcode('sibia_prezzi', function () {
     $servizi = array(
         'SynchToFic' => array(
