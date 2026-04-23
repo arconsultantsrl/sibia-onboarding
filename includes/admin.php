@@ -17,7 +17,16 @@ add_action('admin_menu', function () {
 
 add_action('admin_init', function () {
     register_setting('sibia_onboarding_settings', 'sibia_onboarding_api_base');
-    register_setting('sibia_onboarding_settings', 'sibia_onboarding_secret');
+    // Se l'utente invia il campo vuoto, mantieni il valore già salvato (non sovrascrivere con stringa vuota).
+    register_setting('sibia_onboarding_settings', 'sibia_onboarding_secret', [
+        'sanitize_callback' => function ($nuovoValore) {
+            $nuovoValore = sanitize_text_field($nuovoValore);
+            if (empty($nuovoValore)) {
+                return get_option('sibia_onboarding_secret', '');
+            }
+            return $nuovoValore;
+        }
+    ]);
     register_setting('sibia_onboarding_settings', 'sibia_onboarding_header');
     register_setting('sibia_onboarding_settings', 'sibia_support_email');
 
@@ -43,8 +52,13 @@ add_action('admin_init', function () {
         'sibia_onboarding_secret',
         'Onboarding secret',
         function () {
-            $value = esc_attr(sibia_onboarding_get_option('sibia_onboarding_secret', ''));
-            echo "<input type=\"password\" class=\"regular-text\" name=\"sibia_onboarding_secret\" value=\"{$value}\" />";
+            $isSet = !empty(sibia_onboarding_get_option('sibia_onboarding_secret', ''));
+            $placeholder = $isSet ? '(lascia vuoto per mantenere il valore attuale)' : 'Inserisci il secret';
+            // Il valore NON viene mai incluso nell'HTML per evitare che appaia nel sorgente della pagina.
+            echo "<input type=\"password\" class=\"regular-text\" name=\"sibia_onboarding_secret\" value=\"\" placeholder=\"" . esc_attr($placeholder) . "\" autocomplete=\"new-password\" />";
+            if ($isSet) {
+                echo "<p class=\"description\">Secret configurato. Compilare solo per modificarlo.</p>";
+            }
         },
         'sibia-onboarding',
         'sibia_onboarding_main'
