@@ -628,7 +628,7 @@ add_shortcode('sibia_portal', function () {
                                    class="sibia-btn sibia-btn-download"
                                    download
                                    style="display: inline-block; margin: 10px 0;">
-                                    📥 Scarica Installer (v1.1.0)
+                                    📥 Scarica Installer (v2.0.0)
                                 </a>
 
                                 <div class="sibia-file-info" style="margin-top: 8px;">
@@ -2593,7 +2593,7 @@ function sibia_onboarding_render_download_step()
                 <a href="https://api.cloud-ar.it/downloads/SyncPicamPipedrive_Setup.exe"
                    class="sibia-btn sibia-btn-download"
                    download>
-                    📥 Scarica Installer (v1.1.0)
+                    📥 Scarica Installer (v2.0.0)
                 </a>
 
                 <div class="sibia-file-info">
@@ -2995,7 +2995,10 @@ add_shortcode('sibia_accedi', function () {
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['sibia_login_nonce'])) {
         if (!wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['sibia_login_nonce'])), 'sibia_accedi')) {
-            $errors[] = 'Richiesta non valida. Riprova.';
+            // Il nonce è scaduto (tipicamente per via della cache della pagina).
+            // Recuperiamo l'email per pre-compilare il form e guidare l'utente a riprovare.
+            $email = sanitize_email(wp_unslash($_POST['sibia_login_email'] ?? ''));
+            $errors[] = 'Sessione scaduta. Reinserisci la password e riprova.';
         } else {
             $email    = sanitize_email(wp_unslash($_POST['sibia_login_email'] ?? ''));
             $password = wp_unslash($_POST['sibia_login_password'] ?? '');

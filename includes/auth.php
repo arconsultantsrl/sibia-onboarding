@@ -189,6 +189,9 @@ button:hover{background:#174a85}
 add_action('template_redirect', function () {
     if (is_page('registrazione') || is_page('accesso')) {
         nocache_headers();
+        // LiteSpeed Cache usa questa intestazione propria invece di Cache-Control.
+        // Se LiteSpeed non è attivo l'intestazione viene ignorata, non causa problemi.
+        header('X-LiteSpeed-Cache-Control: no-cache');
     }
     if (is_page('account')) {
         nocache_headers();
