@@ -187,7 +187,7 @@ button:hover{background:#174a85}
 // /account/ e /accesso/ devono essere no-cache: il contenuto dipende dallo stato di login.
 // Utenti loggati su /account/ o /accesso/ → portale. Non loggati su /account/ → /accesso/.
 add_action('template_redirect', function () {
-    if (is_page('registrazione') || is_page('accesso')) {
+    if (is_page('registrazione') || is_page('accesso') || is_page('password-dimenticata') || is_page('reset-password')) {
         nocache_headers();
         // LiteSpeed Cache usa questa intestazione propria invece di Cache-Control.
         // Se LiteSpeed non è attivo l'intestazione viene ignorata, non causa problemi.
@@ -325,3 +325,30 @@ add_action('init', function () {
     }
     set_transient('sibia_accesso_page_v1', true, DAY_IN_SECONDS);
 });
+
+// Auto-creazione pagine /password-dimenticata/ e /reset-password/ per il flusso reset password SIBIA.
+add_action('init', function () {
+    if (get_transient('sibia_pwd_pages_v1')) return;
+    foreach ([
+        ['slug' => 'password-dimenticata', 'title' => 'Password dimenticata', 'content' => '[sibia_password_dimenticata]'],
+        ['slug' => 'reset-password',       'title' => 'Reimposta password',   'content' => '[sibia_reset_password]'],
+    ] as $p) {
+        if (!get_page_by_path($p['slug'])) {
+            wp_insert_post([
+                'post_title'   => $p['title'],
+                'post_name'    => $p['slug'],
+                'post_content' => $p['content'],
+                'post_status'  => 'publish',
+                'post_type'    => 'page',
+                'post_author'  => 1,
+            ]);
+        }
+    }
+    set_transient('sibia_pwd_pages_v1', true, DAY_IN_SECONDS);
+});
+
+// Intercetta il link "Password dimenticata?" e lo manda alla pagina SIBIA invece di wp-login.php
+add_filter('lostpassword_url', function ($url, $redirect) {
+    $page = get_page_by_path('password-dimenticata');
+    return $page ? get_permalink($page->ID) : $url;
+}, 10, 2);

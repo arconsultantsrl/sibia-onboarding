@@ -3047,6 +3047,13 @@ add_shortcode('sibia_accedi', function () {
             <p style="color:#61758b;margin:0;font-size:15px;">Inserisci le tue credenziali per entrare</p>
         </div>
 
+        <?php if (isset($_GET['password_aggiornata'])) : ?>
+            <div style="margin-bottom:20px;background:#d1fae5;border:1px solid #6ee7b7;border-radius:10px;padding:14px 18px;">
+                <p style="margin:0;color:#065f46;font-size:14px;font-weight:600;">Password aggiornata con successo.</p>
+                <p style="margin:4px 0 0;color:#047857;font-size:14px;">Accedi con la tua nuova password.</p>
+            </div>
+        <?php endif; ?>
+
         <?php if (!empty($errors)) : ?>
             <div style="margin-bottom:20px;background:#fee2e2;border:1px solid #fca5a5;border-radius:10px;padding:14px 18px;">
                 <?php foreach ($errors as $e) : ?>
@@ -3087,6 +3094,241 @@ add_shortcode('sibia_accedi', function () {
                 <p style="text-align:center;margin-top:8px;font-size:14px;color:var(--sibia-muted,#61758b);">
                     Non hai ancora un account? <a href="<?php echo esc_url($registra_url); ?>" style="color:var(--sibia-blue,#1f5fa6);">Registrati</a>
                 </p>
+            </form>
+        </div>
+    </div>
+    <?php
+    return ob_get_clean();
+});
+
+// =============================================================================
+// SHORTCODE [sibia_password_dimenticata]
+// Pagina /password-dimenticata/ — form per richiedere il link di reset password
+// =============================================================================
+add_shortcode('sibia_password_dimenticata', function () {
+    $logo_url = 'https://sibia.it/wp-content/uploads/2025/06/favicon-sibia.png';
+    $errors   = [];
+    $inviato  = false;
+    $email    = '';
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['sibia_pwd_dim_nonce'])) {
+        if (!wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['sibia_pwd_dim_nonce'])), 'sibia_pwd_dim')) {
+            $errors[] = 'Sessione scaduta. Ricarica la pagina e riprova.';
+        } else {
+            $email = sanitize_email(wp_unslash($_POST['sibia_pwd_email'] ?? ''));
+
+            if (empty($email) || !is_email($email)) {
+                $errors[] = 'Inserisci un indirizzo email valido.';
+            } else {
+                // Rate limiting: max 5 richieste per IP ogni 15 minuti
+                $ip_key    = 'sibia_pwd_ip_' . md5($_SERVER['REMOTE_ADDR'] ?? '');
+                $tentativi = (int) get_transient($ip_key);
+                if ($tentativi >= 5) {
+                    $errors[] = 'Troppe richieste. Riprova tra 15 minuti.';
+                } else {
+                    set_transient($ip_key, $tentativi + 1, 15 * MINUTE_IN_SECONDS);
+                    $user = get_user_by('email', $email);
+                    if ($user) {
+                        $key = get_password_reset_key($user);
+                        if (!is_wp_error($key)) {
+                            $reset_url = add_query_arg([
+                                'key'   => $key,
+                                'login' => rawurlencode($user->user_login),
+                            ], home_url('/reset-password/'));
+
+                            $corpo = '<p>Hai richiesto di reimpostare la password del tuo account SIBIA.</p>'
+                                . '<p>Clicca il pulsante qui sotto per scegliere una nuova password. Il link è valido per 24 ore.</p>'
+                                . '<p style="margin-top:16px;font-size:13px;color:#888;">Se non hai richiesto questo reset, ignora questa email. Il tuo account è al sicuro.</p>';
+
+                            wp_mail(
+                                $user->user_email,
+                                'Reimposta la tua password — SIBIA',
+                                sibia_email_html('Reimposta password', $corpo, $reset_url, 'Reimposta password'),
+                                ['Content-Type: text/html; charset=UTF-8']
+                            );
+                        }
+                    }
+                    // Stesso messaggio sia che l'utente esista o meno (sicurezza: no email enumeration)
+                    $inviato = true;
+                }
+            }
+        }
+    }
+
+    ob_start();
+    ?>
+    <div class="sibia-onboarding" style="max-width:480px;margin:0 auto;background:#ffffff;box-shadow:0 8px 40px rgba(10,20,50,0.18);">
+        <div style="text-align:center;margin-bottom:28px;padding-bottom:24px;border-bottom:1px solid #d6e1ee;">
+            <img src="<?php echo esc_url($logo_url); ?>" alt="SIBIA" style="width:58px;height:58px;border-radius:50%;margin:0 auto 14px;display:block;">
+            <h1 style="font-family:'Raleway',sans-serif;font-size:26px;font-weight:700;color:#1c2b3a;margin:0 0 6px;">Password dimenticata?</h1>
+            <p style="color:#61758b;margin:0;font-size:15px;">Inserisci la tua email per ricevere il link di reset</p>
+        </div>
+
+        <?php if ($inviato) : ?>
+            <div style="background:#d1fae5;border:1px solid #6ee7b7;border-radius:10px;padding:18px 20px;text-align:center;">
+                <p style="margin:0;color:#065f46;font-size:15px;font-weight:600;">Controlla la tua email</p>
+                <p style="margin:8px 0 0;color:#047857;font-size:14px;">Se l'indirizzo inserito corrisponde a un account SIBIA, riceverai un'email con il link per reimpostare la password.</p>
+            </div>
+            <p style="text-align:center;margin-top:20px;font-size:14px;color:var(--sibia-muted,#61758b);">
+                <a href="<?php echo esc_url(home_url('/accesso/')); ?>" style="color:var(--sibia-blue,#1f5fa6);">← Torna al login</a>
+            </p>
+        <?php else : ?>
+            <?php if (!empty($errors)) : ?>
+                <div style="margin-bottom:20px;background:#fee2e2;border:1px solid #fca5a5;border-radius:10px;padding:14px 18px;">
+                    <?php foreach ($errors as $e) : ?>
+                        <p style="margin:0 0 4px;color:#dc2626;font-size:14px;"><?php echo esc_html($e); ?></p>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+
+            <div class="sibia-step">
+                <form method="post" action="">
+                    <?php wp_nonce_field('sibia_pwd_dim', 'sibia_pwd_dim_nonce'); ?>
+
+                    <div style="margin-bottom:20px;">
+                        <label style="display:block;font-weight:600;margin-bottom:6px;color:var(--sibia-ink,#1c2b3a);">Indirizzo email</label>
+                        <input type="email" name="sibia_pwd_email"
+                               value="<?php echo esc_attr($email); ?>"
+                               placeholder="nome@azienda.it"
+                               required
+                               style="width:100%;padding:10px 14px;border:1px solid var(--sibia-border,#d6e1ee);border-radius:8px;font-size:15px;font-family:'DM Sans',sans-serif;box-sizing:border-box;">
+                    </div>
+
+                    <button type="submit" class="sibia-btn" style="width:100%;justify-content:center;">
+                        Invia link di reset
+                    </button>
+
+                    <p style="text-align:center;margin-top:16px;font-size:14px;color:var(--sibia-muted,#61758b);">
+                        <a href="<?php echo esc_url(home_url('/accesso/')); ?>" style="color:var(--sibia-blue,#1f5fa6);">← Torna al login</a>
+                    </p>
+                </form>
+            </div>
+        <?php endif; ?>
+    </div>
+    <?php
+    return ob_get_clean();
+});
+
+// =============================================================================
+// SHORTCODE [sibia_reset_password]
+// Pagina /reset-password/ — form per impostare la nuova password (con key+login dall'email)
+// =============================================================================
+add_shortcode('sibia_reset_password', function () {
+    $logo_url = 'https://sibia.it/wp-content/uploads/2025/06/favicon-sibia.png';
+    $errors   = [];
+
+    // Il key e il login arrivano dall'URL (GET) la prima volta, poi dai campi hidden nel POST
+    $key   = isset($_GET['key'])   ? sanitize_text_field(wp_unslash($_GET['key']))
+           : (isset($_POST['sibia_rp_key'])   ? sanitize_text_field(wp_unslash($_POST['sibia_rp_key']))   : '');
+    $login = isset($_GET['login']) ? sanitize_text_field(wp_unslash($_GET['login']))
+           : (isset($_POST['sibia_rp_login']) ? sanitize_text_field(wp_unslash($_POST['sibia_rp_login'])) : '');
+
+    $ripristina_url = home_url('/password-dimenticata/');
+
+    // Nessun token nell'URL
+    if (empty($key) || empty($login)) {
+        ob_start();
+        ?>
+        <div class="sibia-onboarding" style="max-width:480px;margin:0 auto;background:#ffffff;box-shadow:0 8px 40px rgba(10,20,50,0.18);">
+            <div style="text-align:center;margin-bottom:28px;padding-bottom:24px;border-bottom:1px solid #d6e1ee;">
+                <img src="<?php echo esc_url($logo_url); ?>" alt="SIBIA" style="width:58px;height:58px;border-radius:50%;margin:0 auto 14px;display:block;">
+                <h1 style="font-family:'Raleway',sans-serif;font-size:26px;font-weight:700;color:#1c2b3a;margin:0 0 6px;">Link non valido</h1>
+            </div>
+            <div style="margin-bottom:20px;background:#fee2e2;border:1px solid #fca5a5;border-radius:10px;padding:14px 18px;">
+                <p style="margin:0;color:#dc2626;font-size:14px;">Il link di reset non è valido o è scaduto. Richiedi un nuovo link.</p>
+            </div>
+            <p style="text-align:center;font-size:14px;">
+                <a href="<?php echo esc_url($ripristina_url); ?>" style="color:var(--sibia-blue,#1f5fa6);">Richiedi un nuovo link</a>
+            </p>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    // Verifica il token con WordPress
+    $user = check_password_reset_key($key, $login);
+
+    if (is_wp_error($user)) {
+        ob_start();
+        ?>
+        <div class="sibia-onboarding" style="max-width:480px;margin:0 auto;background:#ffffff;box-shadow:0 8px 40px rgba(10,20,50,0.18);">
+            <div style="text-align:center;margin-bottom:28px;padding-bottom:24px;border-bottom:1px solid #d6e1ee;">
+                <img src="<?php echo esc_url($logo_url); ?>" alt="SIBIA" style="width:58px;height:58px;border-radius:50%;margin:0 auto 14px;display:block;">
+                <h1 style="font-family:'Raleway',sans-serif;font-size:26px;font-weight:700;color:#1c2b3a;margin:0 0 6px;">Link scaduto</h1>
+            </div>
+            <div style="margin-bottom:20px;background:#fee2e2;border:1px solid #fca5a5;border-radius:10px;padding:14px 18px;">
+                <p style="margin:0;color:#dc2626;font-size:14px;">Il link di reset è scaduto o è già stato utilizzato. Richiedi un nuovo link.</p>
+            </div>
+            <p style="text-align:center;font-size:14px;">
+                <a href="<?php echo esc_url($ripristina_url); ?>" style="color:var(--sibia-blue,#1f5fa6);">Richiedi un nuovo link</a>
+            </p>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    // POST: elabora il reset della password
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['sibia_rp_nonce'])) {
+        if (!wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['sibia_rp_nonce'])), 'sibia_reset_password')) {
+            $errors[] = 'Sessione scaduta. Ricarica la pagina e riprova.';
+        } else {
+            $password1 = wp_unslash($_POST['sibia_rp_pwd1'] ?? '');
+            $password2 = wp_unslash($_POST['sibia_rp_pwd2'] ?? '');
+
+            if (strlen($password1) < 8) {
+                $errors[] = 'La password deve avere almeno 8 caratteri.';
+            } elseif ($password1 !== $password2) {
+                $errors[] = 'Le due password non coincidono.';
+            } else {
+                reset_password($user, $password1);
+                wp_redirect(add_query_arg('password_aggiornata', '1', home_url('/accesso/')));
+                exit;
+            }
+        }
+    }
+
+    ob_start();
+    ?>
+    <div class="sibia-onboarding" style="max-width:480px;margin:0 auto;background:#ffffff;box-shadow:0 8px 40px rgba(10,20,50,0.18);">
+        <div style="text-align:center;margin-bottom:28px;padding-bottom:24px;border-bottom:1px solid #d6e1ee;">
+            <img src="<?php echo esc_url($logo_url); ?>" alt="SIBIA" style="width:58px;height:58px;border-radius:50%;margin:0 auto 14px;display:block;">
+            <h1 style="font-family:'Raleway',sans-serif;font-size:26px;font-weight:700;color:#1c2b3a;margin:0 0 6px;">Nuova password</h1>
+            <p style="color:#61758b;margin:0;font-size:15px;">Scegli una nuova password per il tuo account</p>
+        </div>
+
+        <?php if (!empty($errors)) : ?>
+            <div style="margin-bottom:20px;background:#fee2e2;border:1px solid #fca5a5;border-radius:10px;padding:14px 18px;">
+                <?php foreach ($errors as $e) : ?>
+                    <p style="margin:0 0 4px;color:#dc2626;font-size:14px;"><?php echo esc_html($e); ?></p>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+
+        <div class="sibia-step">
+            <form method="post" action="">
+                <?php wp_nonce_field('sibia_reset_password', 'sibia_rp_nonce'); ?>
+                <input type="hidden" name="sibia_rp_key"   value="<?php echo esc_attr($key); ?>">
+                <input type="hidden" name="sibia_rp_login" value="<?php echo esc_attr($login); ?>">
+
+                <div style="margin-bottom:16px;">
+                    <label style="display:block;font-weight:600;margin-bottom:6px;color:var(--sibia-ink,#1c2b3a);">Nuova password</label>
+                    <input type="password" name="sibia_rp_pwd1"
+                           placeholder="Almeno 8 caratteri"
+                           required minlength="8"
+                           style="width:100%;padding:10px 14px;border:1px solid var(--sibia-border,#d6e1ee);border-radius:8px;font-size:15px;font-family:'DM Sans',sans-serif;box-sizing:border-box;">
+                </div>
+
+                <div style="margin-bottom:24px;">
+                    <label style="display:block;font-weight:600;margin-bottom:6px;color:var(--sibia-ink,#1c2b3a);">Conferma password</label>
+                    <input type="password" name="sibia_rp_pwd2"
+                           placeholder="Ripeti la password"
+                           required minlength="8"
+                           style="width:100%;padding:10px 14px;border:1px solid var(--sibia-border,#d6e1ee);border-radius:8px;font-size:15px;font-family:'DM Sans',sans-serif;box-sizing:border-box;">
+                </div>
+
+                <button type="submit" class="sibia-btn" style="width:100%;justify-content:center;">
+                    Imposta nuova password
+                </button>
             </form>
         </div>
     </div>
