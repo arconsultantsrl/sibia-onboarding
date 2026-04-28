@@ -2,7 +2,7 @@
 /**
  * Plugin Name: SIBIA Onboarding
  * Description: Pagina di onboarding e gestione sincronizzazioni per SIBIA.
- * Version: 2.84.24
+ * Version: 2.84.25
  * GitHub Plugin URI: arconsultantsrl/sibia-onboarding
  * Primary Branch: main
  * Requires at least: 6.0
@@ -50,3 +50,4 @@ require_once __DIR__ . '/includes/emails.php';
 require_once __DIR__ . '/includes/billing.php';
 require_once __DIR__ . '/includes/contracts.php';
 require_once __DIR__ . '/includes/shortcodes.php';
+require_once __DIR__ . '/includes/guida-picampipedrive.php';
