@@ -2676,7 +2676,7 @@ add_shortcode('sibia_registrazione', function () {
                 <div style="font-size:48px;margin-bottom:16px;">✅</div>
                 <p style="font-size:20px;font-weight:700;color:var(--sibia-ink,#1c2b3a);margin:0 0 12px;">Email verificata!</p>
                 <p style="color:var(--sibia-muted,#61758b);margin:0 0 28px;">Il tuo account è attivo. Puoi ora accedere al portale.</p>
-                <a href="<?php echo esc_url(wp_login_url(home_url('/account/'))); ?>"
+                <a href="<?php echo esc_url(home_url('/accesso/')); ?>"
                    style="display:inline-block;background:var(--sibia-accent,#2563eb);color:#fff;
                           text-decoration:none;padding:14px 36px;border-radius:8px;
                           font-size:16px;font-weight:700;">
@@ -2697,7 +2697,7 @@ add_shortcode('sibia_registrazione', function () {
                 <div style="font-size:48px;margin-bottom:16px;">✅</div>
                 <p style="font-size:18px;font-weight:700;color:var(--sibia-ink,#1c2b3a);margin:0 0 12px;">Link già utilizzato o scaduto</p>
                 <p style="color:var(--sibia-muted,#61758b);margin:0 0 24px;">Se hai già confermato il tuo indirizzo, puoi accedere normalmente.<br>Se non hai ancora un account attivo, registrati nuovamente.</p>
-                <a href="<?php echo esc_url(wp_login_url(home_url('/account/'))); ?>"
+                <a href="<?php echo esc_url(home_url('/accesso/')); ?>"
                    style="display:inline-block;background:var(--sibia-accent,#2563eb);color:#fff;
                           text-decoration:none;padding:14px 36px;border-radius:8px;
                           font-size:16px;font-weight:700;margin-bottom:12px;">
@@ -2714,6 +2714,27 @@ add_shortcode('sibia_registrazione', function () {
         return ob_get_clean();
     }
 
+    // ── Registrazione completata — messaggio di successo dopo redirect PRG ──
+    // Il redirect avviene subito dopo wp_mail() per impedire re-POST su aggiornamento pagina.
+    if (isset($_GET['sibia_reg_ok']) && $_GET['sibia_reg_ok'] === '1') {
+        $logo_url = 'https://sibia.it/wp-content/uploads/2025/06/favicon-sibia.png';
+        ob_start();
+        ?>
+        <div class="sibia-onboarding" style="max-width:480px;margin:0 auto;background:#ffffff;box-shadow:0 8px 40px rgba(10,20,50,0.18);">
+            <div style="text-align:center;margin-bottom:28px;padding-bottom:24px;border-bottom:1px solid #d6e1ee;">
+                <img src="<?php echo esc_url($logo_url); ?>" alt="SIBIA" style="width:58px;height:58px;border-radius:50%;margin:0 auto 14px;display:block;">
+                <h1 style="font-family:'Raleway',sans-serif;font-size:26px;font-weight:700;color:#1c2b3a;margin:0 0 6px;">Registrazione completata</h1>
+            </div>
+            <div class="sibia-step" style="text-align:center;padding:32px 24px;">
+                <div style="font-size:40px;margin-bottom:16px;">✉️</div>
+                <p style="font-size:18px;font-weight:700;color:var(--sibia-ink,#1c2b3a);margin:0 0 12px;">Controlla la tua email</p>
+                <p style="color:var(--sibia-muted,#61758b);margin:0;">Ti abbiamo inviato un'email con il bottone <strong>Conferma il tuo indirizzo</strong>.<br>Cliccalo per attivare l'account.</p>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
     // Se già loggato, rimanda al portale
     if (is_user_logged_in()) {
         $page = get_page_by_path('area-riservata');
@@ -2724,7 +2745,6 @@ add_shortcode('sibia_registrazione', function () {
 
     $errors  = [];
     $email   = '';
-    $success = false;
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['sibia_reg_nonce'])) {
         if (!wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['sibia_reg_nonce'])), 'sibia_registrazione')) {
@@ -2761,7 +2781,7 @@ add_shortcode('sibia_registrazione', function () {
 
             if (empty($errors)) {
                 if (email_exists($email)) {
-                    $errors[] = 'Questo indirizzo email è già registrato. <a href="' . esc_url(wp_login_url()) . '">Accedi</a>';
+                    $errors[] = 'Questo indirizzo email è già registrato. <a href="' . esc_url(home_url('/accesso/')) . '">Accedi</a>';
                 } else {
                     // Disabilita User Verification (PickPlugins) durante wp_create_user() per evitare
                     // che UV invii una propria email di verifica in parallelo alla nostra.
@@ -2814,7 +2834,11 @@ add_shortcode('sibia_registrazione', function () {
                             ['Content-Type: text/html; charset=UTF-8']
                         );
 
-                        $success = true;
+                        // PRG: redirect subito dopo l'invio email per evitare re-POST
+                        // su aggiornamento pagina (che causerebbe un secondo invio identico).
+                        $permalink = get_permalink() ?: home_url('/registrazione/');
+                        wp_redirect(add_query_arg('sibia_reg_ok', '1', $permalink));
+                        exit;
                     }
                 }
             }
@@ -2832,14 +2856,6 @@ add_shortcode('sibia_registrazione', function () {
             <h1 style="font-family:'Raleway',sans-serif;font-size:26px;font-weight:700;color:#1c2b3a;margin:0 0 6px;">Registrati su SIBIA</h1>
             <p style="color:#61758b;margin:0;font-size:15px;">Crea il tuo account gratuito</p>
         </div>
-
-        <?php if ($success) : ?>
-            <div class="sibia-step" style="text-align:center;padding:32px 24px;">
-                <div style="font-size:40px;margin-bottom:16px;">✉️</div>
-                <p style="font-size:18px;font-weight:700;color:var(--sibia-ink,#1c2b3a);margin:0 0 12px;">Controlla la tua email</p>
-                <p style="color:var(--sibia-muted,#61758b);margin:0;">Ti abbiamo inviato un'email con il bottone <strong>Conferma il tuo indirizzo</strong>.<br>Cliccalo per attivare l'account.</p>
-            </div>
-        <?php else : ?>
 
         <?php if (!empty($errors)) : ?>
             <div class="sibia-panel sibia-panel--error" style="margin-bottom:20px;">
@@ -2890,12 +2906,11 @@ add_shortcode('sibia_registrazione', function () {
                 </button>
 
                 <p style="text-align:center;margin-top:16px;font-size:14px;color:var(--sibia-muted,#61758b);">
-                    Hai già un account? <a href="<?php echo esc_url(site_url('wp-login.php')); ?>" style="color:var(--sibia-blue,#1f5fa6);">Accedi</a>
+                    Hai già un account? <a href="<?php echo esc_url(home_url('/accesso/')); ?>" style="color:var(--sibia-blue,#1f5fa6);">Accedi</a>
                 </p>
             </form>
         </div>
 
-        <?php endif; // end else (not success, not verifica_err) ?>
     </div>
     <script>
     (function(){

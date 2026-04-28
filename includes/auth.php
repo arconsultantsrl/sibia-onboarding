@@ -300,12 +300,17 @@ add_action('init', function () {
     set_transient('sibia_registrazione_page_v1', true, DAY_IN_SECONDS);
 });
 
-// Cattura i fallimenti di wp_mail e li salva per il pannello admin.
-// Utile per diagnosticare problemi con WP Mail SMTP o la configurazione SMTP.
+// Cattura i fallimenti di wp_mail e li salva permanentemente per il pannello admin.
+// Usa update_option (non transient) così l'errore non scade dopo 1 ora e rimane visibile
+// finché non viene sovrascritto da un nuovo evento. Utile per diagnosticare problemi con
+// WP Mail SMTP o la configurazione SMTP che si manifestano in modo intermittente.
 add_action('wp_mail_failed', function ($wp_error) {
     $msg = $wp_error->get_error_message();
     error_log('[SIBIA] wp_mail fallita: ' . $msg);
-    set_transient('sibia_last_mail_error', $msg, HOUR_IN_SECONDS);
+    update_option('sibia_mail_last_error', [
+        'msg'  => $msg,
+        'time' => current_time('mysql'),
+    ], false);
 });
 
 // Auto-creazione pagina /accesso/ con form di login SIBIA.

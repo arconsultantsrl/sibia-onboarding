@@ -98,7 +98,11 @@ function sibia_onboarding_render_settings()
         'error_invalid' => array('error',   'ZIP non valido: non contiene sibia-onboarding.php alla radice.'),
         'error_extract' => array('error',   'Estrazione fallita. Verificare i permessi della cartella plugins.'),
     );
-    $mailError = get_transient('sibia_last_mail_error');
+    $mailErrorData = get_option('sibia_mail_last_error', null);
+    $mailError     = is_array($mailErrorData) ? ($mailErrorData['msg']  ?? null) : null;
+    $mailErrorTime = is_array($mailErrorData) ? ($mailErrorData['time'] ?? null) : null;
+
+    $testEmailResult = isset($_GET['sibia_test_email']) ? sanitize_text_field($_GET['sibia_test_email']) : '';
     ?>
     <div class="wrap">
         <h1>SIBIA Onboarding</h1>
@@ -106,9 +110,31 @@ function sibia_onboarding_render_settings()
         <?php if (!empty($mailError)) : ?>
         <div class="notice notice-error is-dismissible" style="margin-left:0;">
             <p><strong>Ultimo errore invio email (wp_mail):</strong> <?php echo esc_html($mailError); ?></p>
-            <p style="font-size:12px;color:#777;">Verificare la configurazione di WP Mail SMTP (Impostazioni → WP Mail SMTP → Tools → Email Test). Questo messaggio scompare dopo 1 ora.</p>
+            <?php if ($mailErrorTime) : ?>
+            <p style="font-size:12px;color:#777;">Data/ora: <?php echo esc_html($mailErrorTime); ?></p>
+            <?php endif; ?>
+            <p style="font-size:12px;color:#777;">Verificare la configurazione di WP Mail SMTP (Impostazioni → WP Mail SMTP → Tools → Email Test).</p>
         </div>
         <?php endif; ?>
+
+        <?php if ($testEmailResult === 'ok') : ?>
+        <div class="notice notice-success is-dismissible" style="margin-left:0;">
+            <p><strong>Email di test inviata.</strong> Controlla la casella <code><?php echo esc_html(get_option('admin_email')); ?></code>.</p>
+        </div>
+        <?php elseif ($testEmailResult === 'fail') : ?>
+        <div class="notice notice-error is-dismissible" style="margin-left:0;">
+            <p><strong>Invio email di test fallito.</strong> Controlla la configurazione WP Mail SMTP.</p>
+        </div>
+        <?php endif; ?>
+
+        <!-- ===== Test email ===== -->
+        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="margin-bottom:20px;">
+            <input type="hidden" name="action" value="sibia_test_email" />
+            <?php wp_nonce_field('sibia_test_email_nonce'); ?>
+            <button type="submit" class="button button-secondary">
+                Invia email di test a <?php echo esc_html(get_option('admin_email')); ?>
+            </button>
+        </form>
 
         <!-- ===== Configurazione ApiConnect ===== -->
         <form method="post" action="options.php">
@@ -152,6 +178,32 @@ function sibia_onboarding_render_settings()
 }
 
 add_action('admin_post_sibia_self_update', 'sibia_handle_self_update');
+
+// Gestore del test email dal pannello admin
+add_action('admin_post_sibia_test_email', function () {
+    if (!current_user_can('manage_options')) {
+        wp_die('Accesso negato.');
+    }
+    check_admin_referer('sibia_test_email_nonce');
+
+    $adminEmail = get_option('admin_email');
+    $result = wp_mail(
+        $adminEmail,
+        '[SIBIA] Test configurazione email',
+        sibia_email_html(
+            'Test email',
+            '<p>Questa è un\'email di test inviata dal pannello admin di SIBIA.</p>'
+                . '<p>Se stai leggendo questo messaggio, l\'invio tramite WP Mail SMTP funziona correttamente.</p>',
+            admin_url('options-general.php?page=sibia-onboarding'),
+            'Torna al pannello'
+        ),
+        ['Content-Type: text/html; charset=UTF-8']
+    );
+
+    $base = admin_url('options-general.php?page=sibia-onboarding');
+    wp_redirect(add_query_arg('sibia_test_email', $result ? 'ok' : 'fail', $base));
+    exit;
+});
 
 function sibia_handle_self_update()
 {
