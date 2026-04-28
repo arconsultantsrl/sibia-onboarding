@@ -109,24 +109,24 @@ add_action('init', function () {
 
     $user_id = (int) $data['uid'];
 
-    // POST con campo conferma → verifica reale (i bot non inviano POST sui form).
-    // Non si usa wp_verify_nonce perché all'hook 'init' priorità 5 il sistema di
-    // sessione WordPress non è ancora inizializzato per utenti non loggati.
-    // La sicurezza è garantita dal token di 40 caratteri nell'URL: solo chi ha
-    // ricevuto la mail può conoscerlo. Non serve un secondo segreto.
+    // Attiva l'account non appena il link valido viene aperto (GET o POST).
+    // Garantisce che l'email sia verificata anche se l'utente non clicca il pulsante "Attiva".
+    // La sicurezza è mantenuta dal token a 40 caratteri: solo il destinatario della mail lo conosce.
+    // Segna l'utente come verificato in User Verification (PickPlugins).
+    // Senza questi meta, uv_user_authentication() bloccherebbe wp_signon() con WP_Error.
+    update_user_meta($user_id, 'sibia_email_verificata', 1);
+    update_user_meta($user_id, 'user_activation_status', 1);
+    // Assicura che user_activation_key sia vuoto.
+    global $wpdb;
+    $wpdb->update($wpdb->users, ['user_activation_key' => ''], ['ID' => $user_id]);
+    clean_user_cache($user_id);
+
+    // POST con campo conferma → auto-login e redirect al portale (consuma il token).
+    // I bot non inviano mai POST su form → il token rimane disponibile per il click umano.
     if ($_SERVER['REQUEST_METHOD'] === 'POST'
         && isset($_POST['sibia_confirma'])
         && $_POST['sibia_confirma'] === '1') {
         delete_option('sibia_ev_' . $token);
-        update_user_meta($user_id, 'sibia_email_verificata', 1);
-        // Segna l'utente come verificato in User Verification (PickPlugins).
-        // Senza questa riga, uv_user_authentication() blocca wp_signon() con WP_Error.
-        update_user_meta($user_id, 'user_activation_status', 1);
-
-        // Salvaguardia: assicura che user_activation_key sia vuoto.
-        global $wpdb;
-        $wpdb->update($wpdb->users, ['user_activation_key' => ''], ['ID' => $user_id]);
-        clean_user_cache($user_id);
 
         // Auto-login: bypassa il filtro 'authenticate' di User Verification (PickPlugins).
         // wp_set_auth_cookie non passa per il flusso di login → nessun blocco.
