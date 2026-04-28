@@ -98,9 +98,17 @@ function sibia_onboarding_render_settings()
         'error_invalid' => array('error',   'ZIP non valido: non contiene sibia-onboarding.php alla radice.'),
         'error_extract' => array('error',   'Estrazione fallita. Verificare i permessi della cartella plugins.'),
     );
+    $mailError = get_transient('sibia_last_mail_error');
     ?>
     <div class="wrap">
         <h1>SIBIA Onboarding</h1>
+
+        <?php if (!empty($mailError)) : ?>
+        <div class="notice notice-error is-dismissible" style="margin-left:0;">
+            <p><strong>Ultimo errore invio email (wp_mail):</strong> <?php echo esc_html($mailError); ?></p>
+            <p style="font-size:12px;color:#777;">Verificare la configurazione di WP Mail SMTP (Impostazioni → WP Mail SMTP → Tools → Email Test). Questo messaggio scompare dopo 1 ora.</p>
+        </div>
+        <?php endif; ?>
 
         <!-- ===== Configurazione ApiConnect ===== -->
         <form method="post" action="options.php">

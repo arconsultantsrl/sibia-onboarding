@@ -300,6 +300,14 @@ add_action('init', function () {
     set_transient('sibia_registrazione_page_v1', true, DAY_IN_SECONDS);
 });
 
+// Cattura i fallimenti di wp_mail e li salva per il pannello admin.
+// Utile per diagnosticare problemi con WP Mail SMTP o la configurazione SMTP.
+add_action('wp_mail_failed', function ($wp_error) {
+    $msg = $wp_error->get_error_message();
+    error_log('[SIBIA] wp_mail fallita: ' . $msg);
+    set_transient('sibia_last_mail_error', $msg, HOUR_IN_SECONDS);
+});
+
 // Auto-creazione pagina /accesso/ con form di login SIBIA.
 // Rimpiazza la dipendenza dalla pagina /account/ (layout BeBuilder con vecchio form MemberPress).
 // I non-loggati vengono mandati qui da /accedi/ e da /account/.
