@@ -6,6 +6,70 @@
 if (!defined('ABSPATH')) { exit; }
 
 // =============================================================================
+// ESCLUSIONE AUTOMATICA DA WP FASTEST CACHE
+//
+// WPFC usa htaccess: serve HTML statico PRIMA che PHP giri.
+// Le intestazioni Cache-Control/X-LiteSpeed bastano per LiteSpeed, ma non
+// per WPFC. La sola soluzione affidabile è aggiungere le URL alle esclusioni
+// nell'opzione WpFastestCacheExclude, che WPFC traduce in regole htaccess.
+//
+// Questo blocco lo fa in automatico, una volta sola per versione.
+// Aggiunge /accesso/ e /area-riservata/ se non già presenti.
+// =============================================================================
+add_action('init', function () {
+    if (get_transient('sibia_wpfc_excl_v1')) return;
+
+    $raw = get_option('WpFastestCacheExclude', null);
+    if ($raw === null) {
+        // WPFC non installato o mai configurato: nessuna azione necessaria.
+        set_transient('sibia_wpfc_excl_v1', true, WEEK_IN_SECONDS);
+        return;
+    }
+
+    $rules = @json_decode((string) $raw, true);
+    if (!is_array($rules)) $rules = [];
+
+    $needed = [
+        ['prefix' => 'contain', 'content' => '/accesso/'],
+        ['prefix' => 'contain', 'content' => '/area-riservata/'],
+    ];
+
+    $changed = false;
+    foreach ($needed as $rule) {
+        $found = false;
+        foreach ($rules as $r) {
+            if (isset($r['content']) && $r['content'] === $rule['content']) {
+                $found = true;
+                break;
+            }
+        }
+        if (!$found) {
+            $rules[] = $rule;
+            $changed = true;
+        }
+    }
+
+    if ($changed) {
+        update_option('WpFastestCacheExclude', json_encode(array_values($rules)));
+        // Prova a rigenerare le regole htaccess di WPFC.
+        // Se la classe o il metodo non esistono, l'opzione è comunque aggiornata
+        // e WPFC la applicherà alla prossima operazione di salvataggio impostazioni.
+        if (class_exists('WpFastestCache')) {
+            try {
+                $wpfc = new WpFastestCache();
+                if (method_exists($wpfc, 'createRules')) {
+                    $wpfc->createRules();
+                }
+            } catch (\Throwable $e) {
+                // Silenzioso: non bloccare l'esecuzione per un errore WPFC.
+            }
+        }
+    }
+
+    set_transient('sibia_wpfc_excl_v1', true, WEEK_IN_SECONDS);
+}, 1);
+
+// =============================================================================
 // ENDPOINT /accedi/ — redirect intelligente mai cachato
 //
 // Problema: la pagina /account/ viene salvata in cache come HTML statico.
@@ -187,11 +251,17 @@ button:hover{background:#174a85}
 // /account/ e /accesso/ devono essere no-cache: il contenuto dipende dallo stato di login.
 // Utenti loggati su /account/ o /accesso/ → portale. Non loggati su /account/ → /accesso/.
 add_action('template_redirect', function () {
-    if (is_page('registrazione') || is_page('accesso') || is_page('password-dimenticata') || is_page('reset-password')) {
+    if (is_page('registrazione') || is_page('accesso') || is_page('password-dimenticata') || is_page('reset-password') || is_page('area-riservata')) {
         nocache_headers();
         // LiteSpeed Cache usa questa intestazione propria invece di Cache-Control.
         // Se LiteSpeed non è attivo l'intestazione viene ignorata, non causa problemi.
         header('X-LiteSpeed-Cache-Control: no-cache');
+        // DONOTCACHEPAGE: segnale standard WordPress per i plugin di cache in modalità PHP.
+        // Non bypassa l'htaccess di WPFC (per quello serve l'esclusione in WpFastestCacheExclude,
+        // aggiunta automaticamente dal blocco init qui sopra), ma protegge da altri sistemi.
+        if (!defined('DONOTCACHEPAGE')) {
+            define('DONOTCACHEPAGE', true);
+        }
     }
     if (is_page('account')) {
         nocache_headers();
@@ -212,6 +282,11 @@ add_action('template_redirect', function () {
     if (is_page('accesso') && is_user_logged_in()) {
         $portal = get_page_by_path('area-riservata');
         wp_redirect($portal ? get_permalink($portal->ID) : home_url('/area-riservata/'));
+        exit;
+    }
+    if (is_page('area-riservata') && !is_user_logged_in()) {
+        $login = get_page_by_path('accesso');
+        wp_redirect($login ? get_permalink($login->ID) : home_url('/accesso/'));
         exit;
     }
 });
