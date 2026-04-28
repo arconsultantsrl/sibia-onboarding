@@ -225,7 +225,7 @@ add_shortcode('sibia_guida_picampipedrive', function () {
 
         <div class="sibia-guida-footer">
             <p><strong>Hai bisogno di aiuto?</strong></p>
-            <p>Contatta il supporto SIBIA: <a href="mailto:supporto@sibia.it">supporto@sibia.it</a></p>
+            <p>Contatta il supporto: <a href="mailto:assistenza@arconsultant.it">assistenza@arconsultant.it</a></p>
         </div>
 
     </div>
