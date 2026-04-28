@@ -2240,6 +2240,8 @@ function sibia_onboarding_handle_post($user)
             /* Sincronizza con API */
             $syncResult = sibia_sync_cliente_api($user->user_email, $syncData);
             if ($syncResult['success']) {
+                // Invalida la cache locale del cliente così il portale rilegge subito i nuovi dati.
+                delete_transient('sibia_cli_' . md5($user->user_email));
                 $notice = 'Dati salvati e sincronizzati con successo.';
                 $noticeType = 'success';
             } else {

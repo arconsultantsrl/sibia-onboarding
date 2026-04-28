@@ -115,6 +115,13 @@ function sibia_sync_cliente_api($email, $data)
 
 function sibia_load_cliente_api($email)
 {
+    // Cache breve (2 min) per ridurre le chiamate API ripetute sullo stesso utente.
+    // Evita che ricaricamenti rapidi della pagina portino il portale oltre il rate limit
+    // dell'API, il che causerebbe $isRegistered=false e pulsanti di navigazione disabilitati.
+    $cacheKey = 'sibia_cli_' . md5($email);
+    $cached   = get_transient($cacheKey);
+    if ($cached !== false) return $cached;
+
     $baseUrl = rtrim(sibia_onboarding_get_option('sibia_onboarding_api_base', 'https://api.cloud-ar.it/api/v1'), '/');
     $secret  = sibia_onboarding_get_option('sibia_onboarding_secret', '');
     $header  = sibia_onboarding_get_option('sibia_onboarding_header', 'X-ONBOARDING-KEY');
@@ -142,7 +149,7 @@ function sibia_load_cliente_api($email)
     }
 
     $d = $result['data'];
-    return array(
+    $data = array(
         'nome'               => $d['nome']               ?? '',
         'cognome'            => $d['cognome']             ?? '',
         'ragioneSociale'     => $d['ragioneSociale']      ?? '',
@@ -156,6 +163,12 @@ function sibia_load_cliente_api($email)
         'telefono'           => $d['telefono']            ?? '',
         'telefonoReferente'  => $d['telefonoReferente']   ?? '',
     );
+
+    // Cacha solo se la ragione sociale è presente (dati completi).
+    if (!empty($data['ragioneSociale'])) {
+        set_transient($cacheKey, $data, 2 * MINUTE_IN_SECONDS);
+    }
+    return $data;
 }
 
 function sibia_get_pic_pip_status($email)
