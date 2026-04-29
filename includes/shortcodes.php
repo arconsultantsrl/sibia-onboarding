@@ -2669,6 +2669,54 @@ function sibia_onboarding_render_form()
    ======================================================================== */
 
 add_shortcode('sibia_registrazione', function () {
+    // ── Reinvio email di verifica — richiesto dal link nella pagina di login ──
+    // URL: /registrazione/?sibia_resend=USER_ID
+    // Generato in shortcodes.php (sibia_accedi) quando login fallisce per account non verificato.
+    if (isset($_GET['sibia_resend'])) {
+        $resend_uid  = (int) $_GET['sibia_resend'];
+        $resend_user = get_userdata($resend_uid);
+        $is_verified = $resend_user && (int) get_user_meta($resend_uid, 'user_activation_status', true) === 1;
+
+        if (!$resend_user || $is_verified) {
+            // Account non trovato o già verificato: manda direttamente al login.
+            wp_redirect(home_url('/accesso/'));
+            exit;
+        }
+
+        // Rate limit: max 3 reinvii per IP ogni 15 minuti (anti-abuse).
+        $ip_key    = 'sibia_resend_ip_' . md5($_SERVER['REMOTE_ADDR'] ?? '');
+        $tentativi = (int) get_transient($ip_key);
+        if ($tentativi < 3) {
+            set_transient($ip_key, $tentativi + 1, 15 * MINUTE_IN_SECONDS);
+
+            $token = wp_generate_password(40, false);
+            update_option('sibia_ev_' . $token,
+                ['uid' => $resend_uid, 'exp' => time() + 48 * HOUR_IN_SECONDS], false);
+
+            $verificaUrl = home_url('/?sibia_verifica=' . $token);
+            $corpo = '<p>Hai richiesto un nuovo link di conferma per il tuo account <strong>SIBIA</strong>.</p>
+                      <p>Clicca il bottone qui sotto per attivare il tuo account.</p>
+                      <p style="font-size:13px;color:#888888;">Il link è valido per 48 ore.</p>';
+            $htmlBody = sibia_email_html(
+                'Conferma il tuo indirizzo email',
+                $corpo,
+                $verificaUrl,
+                'Conferma il tuo indirizzo'
+            );
+            wp_mail(
+                $resend_user->user_email,
+                'Conferma la registrazione su SIBIA',
+                $htmlBody,
+                ['Content-Type: text/html; charset=UTF-8']
+            );
+        }
+
+        // Mostra sempre il messaggio "controlla la tua email" (no email enumeration).
+        $permalink = get_permalink() ?: home_url('/registrazione/');
+        wp_redirect(add_query_arg('sibia_reg_ok', '1', $permalink));
+        exit;
+    }
+
     // ── Email verificata con successo (redirect da template_redirect dopo GET token) ──
     if (isset($_GET['sibia_ok']) && $_GET['sibia_ok'] === '1') {
         ob_start();
@@ -3038,8 +3086,20 @@ add_shortcode('sibia_accedi', function () {
                     ], is_ssl());
 
                     if (is_wp_error($user)) {
-                        set_transient($ip_key, $tentativi + 1, 15 * MINUTE_IN_SECONDS);
-                        $errors[] = 'Email o password non corretti.';
+                        // Verifica se il problema è un account non ancora confermato via email.
+                        // User Verification (PickPlugins) blocca wp_signon() con WP_Error quando
+                        // user_activation_status=0, ma il messaggio risultante sarebbe generico.
+                        // In questo caso mostriamo un messaggio specifico con link di reinvio.
+                        $user_check = get_user_by('email', $email);
+                        if ($user_check && (int) get_user_meta($user_check->ID, 'user_activation_status', true) === 0) {
+                            $resend_url = add_query_arg('sibia_resend', $user_check->ID,
+                                get_permalink(get_page_by_path('registrazione')) ?: home_url('/registrazione/'));
+                            $errors[] = 'Il tuo account non è ancora verificato. '
+                                . '<a href="' . esc_url($resend_url) . '">Invia di nuovo l\'email di conferma</a>.';
+                        } else {
+                            set_transient($ip_key, $tentativi + 1, 15 * MINUTE_IN_SECONDS);
+                            $errors[] = 'Email o password non corretti.';
+                        }
                     } else {
                         $page = get_page_by_path('area-riservata');
                         $url  = $page ? get_permalink($page->ID) : home_url('/');

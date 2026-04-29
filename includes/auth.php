@@ -14,15 +14,15 @@ if (!defined('ABSPATH')) { exit; }
 // nell'opzione WpFastestCacheExclude, che WPFC traduce in regole htaccess.
 //
 // Questo blocco lo fa in automatico, una volta sola per versione.
-// Aggiunge /accesso/ e /area-riservata/ se non già presenti.
+// Aggiunge /accesso/, /area-riservata/ e /registrazione/ se non già presenti.
 // =============================================================================
 add_action('init', function () {
-    if (get_transient('sibia_wpfc_excl_v1')) return;
+    if (get_transient('sibia_wpfc_excl_v2')) return;
 
     $raw = get_option('WpFastestCacheExclude', null);
     if ($raw === null) {
         // WPFC non installato o mai configurato: nessuna azione necessaria.
-        set_transient('sibia_wpfc_excl_v1', true, WEEK_IN_SECONDS);
+        set_transient('sibia_wpfc_excl_v2', true, WEEK_IN_SECONDS);
         return;
     }
 
@@ -32,6 +32,7 @@ add_action('init', function () {
     $needed = [
         ['prefix' => 'contain', 'content' => '/accesso/'],
         ['prefix' => 'contain', 'content' => '/area-riservata/'],
+        ['prefix' => 'contain', 'content' => '/registrazione/'],
     ];
 
     $changed = false;
@@ -66,7 +67,7 @@ add_action('init', function () {
         }
     }
 
-    set_transient('sibia_wpfc_excl_v1', true, WEEK_IN_SECONDS);
+    set_transient('sibia_wpfc_excl_v2', true, WEEK_IN_SECONDS);
 }, 1);
 
 // =============================================================================
