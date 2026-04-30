@@ -2811,6 +2811,9 @@ add_shortcode('sibia_registrazione', function () {
             if (empty($password) || strlen($password) < 8) {
                 $errors[] = 'La password deve essere di almeno 8 caratteri.';
             }
+            if (!empty($password) && !preg_match('/^[A-Za-z0-9!#$%&*+\-\.=?_~^()\[\]{}|]+$/', $password)) {
+                $errors[] = 'La password contiene un carattere non permesso. Usa solo lettere, numeri e simboli come: ! # $ % * + - . = ? _ ~';
+            }
             if ($password !== $password2) {
                 $errors[] = 'Le password non coincidono.';
             }
@@ -2930,18 +2933,38 @@ add_shortcode('sibia_registrazione', function () {
 
                 <div style="margin-bottom:16px;">
                     <label style="display:block;font-weight:600;margin-bottom:6px;color:var(--sibia-ink,#1c2b3a);">Password</label>
-                    <input type="password" name="sibia_reg_password" id="sibia_reg_pw1"
-                           placeholder="Minimo 8 caratteri"
-                           required minlength="8"
-                           style="width:100%;padding:10px 14px;border:1px solid var(--sibia-border,#d6e1ee);border-radius:8px;font-size:15px;font-family:'DM Sans',sans-serif;box-sizing:border-box;">
+                    <div style="position:relative;">
+                        <input type="password" name="sibia_reg_password" id="sibia_reg_pw1"
+                               placeholder="Minimo 8 caratteri"
+                               required minlength="8"
+                               style="width:100%;padding:10px 44px 10px 14px;border:1px solid var(--sibia-border,#d6e1ee);border-radius:8px;font-size:15px;font-family:'DM Sans',sans-serif;box-sizing:border-box;">
+                        <button type="button" id="sibia_toggle_pw1" aria-label="Mostra password"
+                                style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#61758b;padding:0;line-height:0;">
+                            <svg id="sibia_eye1_off" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
+                            <svg id="sibia_eye1_on" style="display:none;" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                        </button>
+                    </div>
                 </div>
 
-                <div style="margin-bottom:20px;">
+                <div style="margin-bottom:12px;">
                     <label style="display:block;font-weight:600;margin-bottom:6px;color:var(--sibia-ink,#1c2b3a);">Ripeti password</label>
-                    <input type="password" name="sibia_reg_password2" id="sibia_reg_pw2"
-                           placeholder="Ripeti la password"
-                           required
-                           style="width:100%;padding:10px 14px;border:1px solid var(--sibia-border,#d6e1ee);border-radius:8px;font-size:15px;font-family:'DM Sans',sans-serif;box-sizing:border-box;">
+                    <div style="position:relative;">
+                        <input type="password" name="sibia_reg_password2" id="sibia_reg_pw2"
+                               placeholder="Ripeti la password"
+                               required
+                               style="width:100%;padding:10px 44px 10px 14px;border:1px solid var(--sibia-border,#d6e1ee);border-radius:8px;font-size:15px;font-family:'DM Sans',sans-serif;box-sizing:border-box;">
+                        <button type="button" id="sibia_toggle_pw2" aria-label="Mostra password"
+                                style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#61758b;padding:0;line-height:0;">
+                            <svg id="sibia_eye2_off" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
+                            <svg id="sibia_eye2_on" style="display:none;" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="sibia_pwd_req" style="margin:0 0 20px;display:none;">
+                    <p id="sibia_req_len"   style="font-size:12px;margin:3px 0;color:#dc2626;">✗ Almeno 8 caratteri</p>
+                    <p id="sibia_req_chars" style="font-size:12px;margin:3px 0;color:#dc2626;">✗ Solo caratteri permessi</p>
+                    <p id="sibia_req_match" style="font-size:12px;margin:3px 0;color:#9ca3af;">– Le due password coincidono</p>
                 </div>
 
                 <div style="margin-bottom:24px;">
@@ -2970,6 +2993,9 @@ add_shortcode('sibia_registrazione', function () {
         var pw2  = document.getElementById('sibia_reg_pw2');
         if (!cb || !btn) return;
 
+        // Caratteri permessi nella password (lista bianca — stessa regex usata in PHP).
+        var SAFE_PWD = /^[A-Za-z0-9!#$%&*+\-.=?_~^()\[\]{}|]+$/;
+
         // Mostra/nasconde messaggio di errore inline sotto un campo.
         function setFieldError(field, msg) {
             var errId = field.id + '_err';
@@ -2989,6 +3015,55 @@ add_shortcode('sibia_registrazione', function () {
             }
         }
 
+        // Toggle mostra/nascondi password.
+        function sibiaTogglePwd(btnId, inpId, offId, onId) {
+            var toggleBtn = document.getElementById(btnId);
+            var inp = document.getElementById(inpId);
+            if (!toggleBtn || !inp) return;
+            toggleBtn.addEventListener('click', function() {
+                var showing = inp.type === 'text';
+                inp.type = showing ? 'password' : 'text';
+                document.getElementById(offId).style.display = showing ? '' : 'none';
+                document.getElementById(onId).style.display  = showing ? 'none' : '';
+                toggleBtn.setAttribute('aria-label', showing ? 'Mostra password' : 'Nascondi password');
+            });
+        }
+        sibiaTogglePwd('sibia_toggle_pw1', 'sibia_reg_pw1', 'sibia_eye1_off', 'sibia_eye1_on');
+        sibiaTogglePwd('sibia_toggle_pw2', 'sibia_reg_pw2', 'sibia_eye2_off', 'sibia_eye2_on');
+
+        // Indicatore requisiti password in tempo reale.
+        var reqBox = document.getElementById('sibia_pwd_req');
+        var reqLen = document.getElementById('sibia_req_len');
+        var reqCh  = document.getElementById('sibia_req_chars');
+        var reqMtc = document.getElementById('sibia_req_match');
+
+        function updateReq() {
+            if (!pw1 || !reqBox) return;
+            var v = pw1.value;
+            if (!v) { reqBox.style.display = 'none'; return; }
+            reqBox.style.display = 'block';
+            // Lunghezza minima.
+            var okL = v.length >= 8;
+            reqLen.textContent = (okL ? '✓' : '✗') + ' Almeno 8 caratteri';
+            reqLen.style.color = okL ? '#16a34a' : '#dc2626';
+            // Caratteri permessi.
+            var okC = SAFE_PWD.test(v);
+            var badChar = okC ? '' : (v.match(/[^A-Za-z0-9!#$%&*+\-.=?_~^()\[\]{}|]/) || ['?'])[0];
+            reqCh.textContent = (okC ? '✓' : '✗') + (okC ? ' Solo caratteri permessi' : ' Carattere non permesso: rimuovi "' + badChar + '"');
+            reqCh.style.color = okC ? '#16a34a' : '#dc2626';
+            // Coincidenza tra i due campi.
+            if (pw2 && pw2.value.length > 0) {
+                var okM = v === pw2.value;
+                reqMtc.textContent = (okM ? '✓' : '✗') + ' Le due password coincidono';
+                reqMtc.style.color = okM ? '#16a34a' : '#dc2626';
+            } else {
+                reqMtc.textContent = '– Le due password coincidono';
+                reqMtc.style.color = '#9ca3af';
+            }
+        }
+        if (pw1) pw1.addEventListener('input', updateReq);
+        if (pw2) pw2.addEventListener('input', updateReq);
+
         // Abilita/disabilita il pulsante in base al checkbox privacy.
         cb.addEventListener('change', function(){
             btn.disabled = !cb.checked;
@@ -3007,7 +3082,7 @@ add_shortcode('sibia_registrazione', function () {
             });
         }
 
-        // Validazione al submit: blocca se password < 8 o le due non coincidono.
+        // Validazione al submit: blocca se password non valida o le due non coincidono.
         // btn.form è più robusto di btn.closest('form') per la compatibilità cross-browser.
         var theForm = btn.form || btn.closest('form');
         if (!theForm) return;
@@ -3015,6 +3090,10 @@ add_shortcode('sibia_registrazione', function () {
             var ok = true;
             if (pw1 && pw1.value.length < 8) {
                 setFieldError(pw1, 'La password deve essere di almeno 8 caratteri.');
+                pw1.focus();
+                ok = false;
+            } else if (pw1 && !SAFE_PWD.test(pw1.value)) {
+                setFieldError(pw1, 'La password contiene caratteri non permessi. Usa solo lettere, numeri e simboli come: ! # $ % * + - . = ? _ ~');
                 pw1.focus();
                 ok = false;
             } else if (pw1) {
