@@ -2962,9 +2962,9 @@ add_shortcode('sibia_registrazione', function () {
                 </div>
 
                 <div id="sibia_pwd_req" style="margin:0 0 20px;display:none;">
-                    <p id="sibia_req_len"   style="font-size:12px;margin:3px 0;color:#dc2626;">✗ Almeno 8 caratteri</p>
-                    <p id="sibia_req_chars" style="font-size:12px;margin:3px 0;color:#dc2626;">✗ Solo caratteri permessi</p>
-                    <p id="sibia_req_match" style="font-size:12px;margin:3px 0;color:#9ca3af;">– Le due password coincidono</p>
+                    <p id="sibia_req_len"   style="font-size:12px;margin:3px 0;color:#dc2626;">Almeno 8 caratteri</p>
+                    <p id="sibia_req_chars" style="font-size:12px;margin:3px 0;color:#dc2626;">Solo caratteri permessi</p>
+                    <p id="sibia_req_match" style="font-size:12px;margin:3px 0;color:#9ca3af;">Le due password coincidono</p>
                 </div>
 
                 <div style="margin-bottom:24px;">
@@ -3044,20 +3044,20 @@ add_shortcode('sibia_registrazione', function () {
             reqBox.style.display = 'block';
             // Lunghezza minima.
             var okL = v.length >= 8;
-            reqLen.textContent = (okL ? '✓' : '✗') + ' Almeno 8 caratteri';
+            reqLen.textContent = 'Almeno 8 caratteri';
             reqLen.style.color = okL ? '#16a34a' : '#dc2626';
             // Caratteri permessi.
             var okC = SAFE_PWD.test(v);
             var badChar = okC ? '' : (v.match(/[^A-Za-z0-9!#$%&*+\-.=?_~^()\[\]{}|]/) || ['?'])[0];
-            reqCh.textContent = (okC ? '✓' : '✗') + (okC ? ' Solo caratteri permessi' : ' Carattere non permesso: rimuovi "' + badChar + '"');
+            reqCh.textContent = okC ? 'Solo caratteri permessi' : 'Carattere non permesso: rimuovi "' + badChar + '"';
             reqCh.style.color = okC ? '#16a34a' : '#dc2626';
             // Coincidenza tra i due campi.
             if (pw2 && pw2.value.length > 0) {
                 var okM = v === pw2.value;
-                reqMtc.textContent = (okM ? '✓' : '✗') + ' Le due password coincidono';
+                reqMtc.textContent = 'Le due password coincidono';
                 reqMtc.style.color = okM ? '#16a34a' : '#dc2626';
             } else {
-                reqMtc.textContent = '– Le due password coincidono';
+                reqMtc.textContent = 'Le due password coincidono';
                 reqMtc.style.color = '#9ca3af';
             }
         }
